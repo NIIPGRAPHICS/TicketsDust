@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketsDust | Verification & Ticketing Portal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html5-qrcode for Camera Scanning -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- qrcodejs for QR Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- jsPDF for Printable Ticket Downloads -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#0a0a0c] text-slate-100 min-h-screen pb-12 antialiased">
+
+    <!-- Header Navigation -->
+    <nav class="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500 font-extrabold text-xl">
+                    🎟️
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-white">Tickets<span class="text-orange-500">Dust</span></h1>
+                    <p class="text-[10px] uppercase font-bold tracking-widest text-slate-400">Entry Verification System</p>
+                </div>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="flex bg-slate-900 border border-slate-800 rounded-xl p-1 gap-1 text-sm font-semibold">
+                <button onclick="switchTab('issue')" id="tab-issue" class="px-4 py-2 rounded-lg bg-orange-500 text-black font-bold transition">
+                    ➕ Issue & Print
+                </button>
+                <button onclick="switchTab('scanner')" id="tab-scanner" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
+                    📱 Door Scanner
+                </button>
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
+                    📊 Dashboard (<span id="count-badge">0</span>)
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-4 pt-8">
+
+        <!-- SECTION 1: ISSUE & PRINT TICKET -->
+        <section id="sec-issue" class="space-y-6">
+            <div class="grid md:grid-cols-2 gap-8 items-start">
+                <!-- Registration Form -->
+                <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <span>📝</span> Register New Guest
+                    </h2>
+                    
+                    <form id="issue-form" onsubmit="generateTicket(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Guest Full Name</label>
+                            <input type="text" id="guest-name" required placeholder="e.g. Alex Mercer" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-500 text-white">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Ticket Category</label>
+                                <select id="ticket-cat" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-500 text-white">
+                                    <option value="General Admission">General Admission</option>
+                                    <option value="VIP Access">VIP Access</option>
+                                    <option value="VVIP Backstage">VVIP Backstage</option>
+                                    <option value="Media / Staff">Media / Staff</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Price Paid ($)</label>
+                                <input type="number" id="ticket-price" value="50" min="0" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-500 text-white">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full py-4 bg-orange-500 hover:bg-orange-600 font-extrabold text-black uppercase tracking-wider text-xs rounded-xl transition shadow-lg shadow-orange-500/10">
+                            Create Ticket Entry
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Ticket Preview Card -->
+                <div id="ticket-preview-box" class="hidden bg-gradient-to-br from-slate-900 to-slate-950 border border-orange-500/30 rounded-2xl p-6 relative overflow-hidden shadow-2xl">
+                    <div class="absolute -right-12 -top-12 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl"></div>
+                    
+                    <div class="flex justify-between items-start border-b border-slate-800 pb-4 mb-4">
+                        <div>
+                            <span id="preview-category" class="px-3 py-1 bg-orange-500/10 border border-orange-500/30 text-orange-400 text-[10px] font-extrabold uppercase rounded-full">VIP Access</span>
+                            <h3 id="preview-id" class="text-2xl font-black text-white mt-2">DUST-0001</h3>
+                            <p id="preview-name" class="text-sm font-semibold text-slate-300">Guest Name</p>
+                        </div>
+                        <div id="qrcode" class="p-2 bg-white rounded-xl"></div>
+                    </div>
+
+                    <div class="flex justify-between items-center text-xs text-slate-400 pt-2">
+                        <div>
+                            <p class="font-bold text-slate-500 uppercase text-[9px]">Issued Date</p>
+                            <p id="preview-date">2026-07-31</p>
+                        </div>
+                        <button onclick="downloadPDF()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition">
+                            📥 Download Printable PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: DOOR SCANNER -->
+        <section id="sec-scanner" class="hidden max-w-xl mx-auto space-y-6">
+            <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 text-center space-y-4">
+                <h2 class="text-lg font-bold text-white">📷 Live Camera Verification</h2>
+                <p class="text-xs text-slate-400">Position the ticket's QR code within the camera frame below.</p>
+
+                <!-- Camera Container -->
+                <div class="overflow-hidden rounded-2xl border-2 border-slate-800 bg-black max-w-sm mx-auto">
+                    <div id="reader" class="w-full"></div>
+                </div>
+
+                <div class="flex justify-center gap-3">
+                    <button onclick="startScanner()" class="px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-xl hover:bg-emerald-500/20">
+                        ▶️ Open Camera
+                    </button>
+                    <button onclick="stopScanner()" class="px-4 py-2 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold rounded-xl hover:bg-rose-500/20">
+                        ⏹️ Stop Camera
+                    </button>
+                </div>
+            </div>
+
+            <!-- Verification Result Alert -->
+            <div id="scan-result" class="hidden p-6 rounded-2xl text-center space-y-2 border">
+                <div id="result-status-icon" class="text-4xl"></div>
+                <h3 id="result-status-title" class="text-2xl font-black uppercase tracking-tight"></h3>
+                <p id="result-status-desc" class="text-sm font-medium"></p>
+                <div id="result-meta" class="pt-4 border-t border-white/10 text-xs text-left space-y-1"></div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: DASHBOARD & LOGS -->
+        <section id="sec-dashboard" class="hidden space-y-6">
+            <!-- Metrics Row -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <p class="text-[10px] font-extrabold uppercase text-slate-500">Total Issued</p>
+                    <p id="stat-total" class="text-3xl font-black text-white mt-1">0</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <p class="text-[10px] font-extrabold uppercase text-emerald-500">Checked In</p>
+                    <p id="stat-used" class="text-3xl font-black text-emerald-400 mt-1">0</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <p class="text-[10px] font-extrabold uppercase text-amber-500">Pending</p>
+                    <p id="stat-pending" class="text-3xl font-black text-amber-400 mt-1">0</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <p class="text-[10px] font-extrabold uppercase text-orange-500">Revenue</p>
+                    <p id="stat-revenue" class="text-3xl font-black text-orange-400 mt-1">$0</p>
+                </div>
+            </div>
+
+            <!-- Database Table -->
+            <div class="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center">
+                    <h3 class="font-bold text-white text-sm">Ticket Ledger Database</h3>
+                    <button onclick="clearDatabase()" class="text-xs text-rose-400 hover:underline">Reset Database</button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-950 text-slate-400 uppercase font-bold text-[10px]">
+                            <tr>
+                                <th class="px-6 py-3">Ticket ID</th>
+                                <th class="px-6 py-3">Guest Name</th>
+                                <th class="px-6 py-3">Category</th>
+                                <th class="px-6 py-3">Status</th>
+                                <th class="px-6 py-3">Scan Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticket-table-body" class="divide-y divide-slate-800/50">
+                            <!-- Rows injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Central In-Memory + LocalStorage Database
+        let tickets = JSON.parse(localStorage.getItem('ticketsdust_db')) || [];
+        let html5QrCode = null;
+        let activeTicketForPDF = null;
+
+        // Save DB to LocalStorage
+        function syncDB() {
+            localStorage.setItem('ticketsdust_db', JSON.stringify(tickets));
+            updateDashboard();
+        }
+
+        // Tab Navigation Switcher
+        function switchTab(tab) {
+            ['issue', 'scanner', 'dashboard'].forEach(t => {
+                document.getElementById(`sec-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).className = "px-4 py-2 rounded-lg text-slate-400 hover:text-white transition";
+            });
+            document.getElementById(`sec-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).className = "px-4 py-2 rounded-lg bg-orange-500 text-black font-bold transition";
+
+            if (tab !== 'scanner') stopScanner();
+        }
+
+        // Generate Ticket Handler
+        function generateTicket(e) {
+            e.preventDefault();
+            const name = document.getElementById('guest-name').value.trim();
+            const category = document.getElementById('ticket-cat').value;
+            const price = parseFloat(document.getElementById('ticket-price').value) || 0;
+
+            const ticketId = 'DUST-' + String(tickets.length + 1).padStart(4, '0');
+            const now = new Date().toLocaleString();
+
+            const newTicket = {
+                id: ticketId,
+                name: name,
+                category: category,
+                price: price,
+                status: 'VALID', // 'VALID' or 'USED'
+                issuedAt: now,
+                scannedAt: '-'
+            };
+
+            tickets.push(newTicket);
+            syncDB();
+
+            activeTicketForPDF = newTicket;
+
+            // Render Preview Box UI
+            document.getElementById('preview-id').innerText = newTicket.id;
+            document.getElementById('preview-name').innerText = newTicket.name;
+            document.getElementById('preview-category').innerText = newTicket.category;
+            document.getElementById('preview-date').innerText = newTicket.issuedAt;
+
+            // Render QR Code
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, {
+                text: newTicket.id,
+                width: 90,
+                height: 90,
+                colorDark: "#000000",
+                colorLight: "#ffffff"
+            });
+
+            document.getElementById('ticket-preview-box').classList.remove('hidden');
+            document.getElementById('issue-form').reset();
+        }
+
+        // Download Ticket PDF Function
+        function downloadPDF() {
+            if (!activeTicketForPDF) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [100, 150] });
+
+            // Styling Background & Borders
+            doc.setFillColor(15, 15, 20);
+            doc.rect(0, 0, 100, 150, 'F');
+            
+            doc.setDrawColor(249, 115, 22);
+            doc.setLineWidth(1);
+            doc.rect(5, 5, 90, 140);
+
+            // Header Title
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text("TicketsDust", 50, 18, { align: "center" });
+
+            doc.setFontSize(8);
+            doc.setTextColor(249, 115, 22);
+            doc.text("OFFICIAL EVENT PASS", 50, 23, { align: "center" });
+
+            // Divider Line
+            doc.setDrawColor(40, 40, 50);
+            doc.line(10, 28, 90, 28);
+
+            // Ticket Details
+            doc.setTextColor(180, 180, 190);
+            doc.setFontSize(8);
+            doc.text("TICKET ID:", 15, 38);
+            doc.setFontSize(12);
+            doc.setTextColor(255, 255, 255);
+            doc.text(activeTicketForPDF.id, 15, 44);
+
+            doc.setFontSize(8);
+            doc.setTextColor(180, 180, 190);
+            doc.text("GUEST NAME:", 15, 54);
+            doc.setFontSize(11);
+            doc.setTextColor(255, 255, 255);
+            doc.text(activeTicketForPDF.name, 15, 60);
+
+            doc.setFontSize(8);
+            doc.setTextColor(180, 180, 190);
+            doc.text("CATEGORY:", 15, 70);
+            doc.setFontSize(10);
+            doc.setTextColor(249, 115, 22);
+            doc.text(activeTicketForPDF.category.toUpperCase(), 15, 76);
+
+            // Embed QR Code Graphic into PDF
+            const qrCanvas = document.querySelector('#qrcode canvas');
+            if (qrCanvas) {
+                const qrImg = qrCanvas.toDataURL("image/png");
+                doc.addImage(qrImg, 'PNG', 30, 85, 40, 40);
+            }
+
+            // Footer Note
+            doc.setFontSize(7);
+            doc.setTextColor(100, 100, 110);
+            doc.text("Present this physical printout or dynamic QR code at gate.", 50, 138, { align: "center" });
+
+            doc.save(`${activeTicketForPDF.id}-ticket.pdf`);
+        }
+
+        // Camera QR Scanner Functions
+        function startScanner() {
+            if (html5QrCode) stopScanner();
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 220, height: 220 } },
+                onScanSuccess
+            ).catch(err => alert("Camera permission error: " + err));
+        }
+
+        function stopScanner() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => html5QrCode = null).catch(() => {});
+            }
+        }
+
+        // Scanner Handler Logic
+        function onScanSuccess(decodedText) {
+            const ticket = tickets.find(t => t.id === decodedText.trim());
+            const resultBox = document.getElementById('scan-result');
+            const icon = document.getElementById('result-status-icon');
+            const title = document.getElementById('result-status-title');
+            const desc = document.getElementById('result-status-desc');
+            const meta = document.getElementById('result-meta');
+
+            resultBox.classList.remove('hidden', 'bg-emerald-950/80', 'border-emerald-500', 'bg-rose-950/80', 'border-rose-500', 'bg-amber-950/80', 'border-amber-500');
+
+            if (!ticket) {
+                // ❌ INVALID TICKET
+                resultBox.classList.add('bg-rose-950/80', 'border-rose-500', 'text-rose-200');
+                icon.innerText = "❌";
+                title.innerText = "INVALID TICKET";
+                desc.innerText = "Ticket code unrecognized or corrupted.";
+                meta.innerHTML = `<p><b>Scanned Code:</b> ${decodedText}</p>`;
+            } else if (ticket.status === 'USED') {
+                // 🔴 ALREADY USED TICKET
+                resultBox.classList.add('bg-amber-950/80', 'border-amber-500', 'text-amber-200');
+                icon.innerText = "🔴";
+                title.innerText = "ALREADY USED";
+                desc.innerText = "This ticket has already been checked in.";
+                meta.innerHTML = `
+                    <p><b>Ticket ID:</b> ${ticket.id}</p>
+                    <p><b>Guest:</b> ${ticket.name} (${ticket.category})</p>
+                    <p><b>Previous Entry:</b> ${ticket.scannedAt}</p>
+                `;
+            } else {
+                // ✅ VALID TICKET
+                ticket.status = 'USED';
+                ticket.scannedAt = new Date().toLocaleString();
+                syncDB();
+
+                resultBox.classList.add('bg-emerald-950/80', 'border-emerald-500', 'text-emerald-200');
+                icon.innerText = "✅";
+                title.innerText = "VALID TICKET";
+                desc.innerText = "Access granted. Welcome to the event!";
+                meta.innerHTML = `
+                    <p><b>Ticket ID:</b> ${ticket.id}</p>
+                    <p><b>Guest:</b> ${ticket.name}</p>
+                    <p><b>Category:</b> ${ticket.category}</p>
+                    <p><b>Checked In:</b> ${ticket.scannedAt}</p>
+                `;
+            }
+        }
+
+        // Dashboard Metrics & Table Renders
+        function updateDashboard() {
+            const total = tickets.length;
+            const used = tickets.filter(t => t.status === 'USED').length;
+            const pending = total - used;
+            const revenue = tickets.reduce((acc, t) => acc + (t.price || 0), 0);
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-used').innerText = used;
+            document.getElementById('stat-pending').innerText = pending;
+            document.getElementById('stat-revenue').innerText = `$${revenue}`;
+            document.getElementById('count-badge').innerText = total;
+
+            const tbody = document.getElementById('ticket-table-body');
+            tbody.innerHTML = '';
+
+            tickets.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/30 transition border-b border-slate-800/40";
+                
+                const statusBadge = t.status === 'USED' 
+                    ? `<span class="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-[10px] rounded-md">CHECKED IN</span>`
+                    : `<span class="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold text-[10px] rounded-md">PENDING</span>`;
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-mono font-bold text-white">${t.id}</td>
+                    <td class="px-6 py-4 font-semibold">${t.name}</td>
+                    <td class="px-6 py-4 text-slate-400">${t.category}</td>
+                    <td class="px-6 py-4">${statusBadge}</td>
+                    <td class="px-6 py-4 text-slate-400 font-mono text-[11px]">${t.scannedAt}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function clearDatabase() {
+            if (confirm("Reset all tickets and entry history?")) {
+                tickets = [];
+                syncDB();
+            }
+        }
+
+        // Initialize state
+        updateDashboard();
+    </script>
+</body>
+  </html>
