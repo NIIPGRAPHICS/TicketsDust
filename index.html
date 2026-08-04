@@ -459,46 +459,42 @@
                     <p id="stat-used" class="text-4xl font-black text-emerald-400 mt-1">0</p>
                 </div>
                 <div class="bg-slate-900/50 border border-slate-800/80 p-5 rounded-2xl">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-amber-500">Pending</p>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-amber-500">Pending Entrance</p>
                     <p id="stat-pending" class="text-4xl font-black text-amber-400 mt-1">0</p>
                 </div>
                 <div class="bg-slate-900/50 border border-slate-800/80 p-5 rounded-2xl">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-orange-500">Revenue</p>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-orange-500">Total Revenue</p>
                     <p id="stat-revenue" class="text-4xl font-black text-orange-400 mt-1">R 0</p>
                 </div>
             </div>
 
-            <div class="bg-slate-900/40 border border-slate-800/80 rounded-3xl overflow-hidden backdrop-blur-xl">
-                <div class="px-6 py-5 border-b border-slate-800 flex justify-between items-center flex-wrap gap-4">
+            <!-- Ledger Table -->
+            <div class="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 backdrop-blur-xl">
+                <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
                     <div>
-                        <h3 class="font-black text-white uppercase text-sm tracking-wide">Combined Digital & Physical Ticket Ledger</h3>
-                        <p class="text-xs text-slate-500">Master database tracking all digital and physical gate passes.</p>
+                        <h3 class="text-lg font-black text-white uppercase tracking-tight">Issued Ticket Ledger</h3>
+                        <p class="text-xs text-slate-400">Real-time local verification database and pass registry.</p>
                     </div>
-                    <div class="flex gap-2">
-                        <button onclick="exportDatabaseJSON()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-lg transition">
-                            💾 Export Database JSON
-                        </button>
-                        <button onclick="clearDatabase()" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold text-xs rounded-lg transition">
-                            🗑️ Reset System
-                        </button>
-                    </div>
+                    <button onclick="clearLedger()" class="px-3 py-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold rounded-xl hover:bg-rose-500/20 transition">
+                        🗑️ Reset All Data
+                    </button>
                 </div>
 
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs text-slate-300">
-                        <thead class="bg-slate-950/80 text-slate-400 uppercase font-black text-[10px] tracking-wider border-b border-slate-800">
-                            <tr>
-                                <th class="px-6 py-4">Serial Code</th>
-                                <th class="px-6 py-4">Type</th>
-                                <th class="px-6 py-4">Holder Name</th>
-                                <th class="px-6 py-4">Category Tier</th>
-                                <th class="px-6 py-4">Price</th>
-                                <th class="px-6 py-4">Status</th>
-                                <th class="px-6 py-4">Scan Timestamp</th>
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 uppercase text-[10px] font-extrabold tracking-wider">
+                                <th class="p-3">Serial ID</th>
+                                <th class="p-3">Guest / Holder</th>
+                                <th class="p-3">Category</th>
+                                <th class="p-3">Price</th>
+                                <th class="p-3">Type</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Issued Time</th>
                             </tr>
                         </thead>
-                        <tbody id="ticket-table-body" class="divide-y divide-slate-800/40">
-                            <!-- Injected dynamically -->
+                        <tbody id="ledger-table-body" class="divide-y divide-slate-800/50 text-slate-300 font-medium">
+                            <!-- Populated dynamically via JS -->
                         </tbody>
                     </table>
                 </div>
@@ -507,430 +503,393 @@
 
     </main>
 
+    <!-- JavaScript Engine -->
     <script>
-        // Active Event Configuration
-        let eventConfig = JSON.parse(localStorage.getItem('ticketsdust_event_cfg')) || {
+        // System Data State
+        let eventConfig = {
             title: "Selective Saturdays Live in Durban",
             datetime: "Saturday, 25 April 2026 • 18:00 till Late",
-            venue: "Babize Bonke Club, Central Durban, KZN",
             organiser: "Soul Dust Records",
+            venue: "Babize Bonke Club, Central Durban, KZN",
             desc: "Featuring live performances by Freedom MusiQ, Niipseedadust, DJ Nerd, Vico Green, and Special Guests.",
-            flyerDataUrl: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1000&auto=format&fit=crop"
+            flyerUrl: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1000&auto=format&fit=crop"
         };
 
-        // Master Database Array
-        let tickets = JSON.parse(localStorage.getItem('ticketsdust_db')) || [];
-        let html5QrCode = null;
-        let activeTicketForPDF = null;
+        let ticketsDatabase = [];
+        let currentTicket = null;
+        let html5QrScanner = null;
 
-        // Sound Feedback Engine
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playBeep(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            if (type === 'valid') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.15);
-            } else {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.35);
-            }
-        }
-
-        function syncDB() {
-            localStorage.setItem('ticketsdust_db', JSON.stringify(tickets));
-            localStorage.setItem('ticketsdust_event_cfg', JSON.stringify(eventConfig));
-            updateDashboard();
-        }
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSavedConfig();
+            loadSavedTickets();
+            updateStats();
+            renderPhysicalPreview();
+        });
 
         // Tab Switcher
-        function switchTab(tab) {
-            ['event-setup', 'issue', 'physical', 'scanner', 'dashboard'].forEach(t => {
+        function switchTab(tabId) {
+            const tabs = ['event-setup', 'issue', 'physical', 'scanner', 'dashboard'];
+            tabs.forEach(t => {
                 document.getElementById(`sec-${t}`).classList.add('hidden');
-                document.getElementById(`tab-${t}`).className = "px-4 py-2 rounded-lg text-slate-400 hover:text-white transition";
+                const btn = document.getElementById(`tab-${t}`);
+                if (btn) {
+                    btn.className = "px-4 py-2 rounded-lg text-slate-400 hover:text-white transition";
+                }
             });
-            document.getElementById(`sec-${tab}`).classList.remove('hidden');
-            document.getElementById(`tab-${tab}`).className = "px-4 py-2 rounded-lg bg-orange-500 text-black font-black transition";
 
-            if (tab === 'physical' && document.getElementById('phys-banner-img').src === '') {
-                renderInitialPhysicalBanner();
+            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if (activeBtn) {
+                activeBtn.className = "px-4 py-2 rounded-lg bg-orange-500 text-black font-black transition";
             }
 
-            if (tab !== 'scanner') stopScanner();
+            if (tabId !== 'scanner' && html5QrScanner) {
+                stopScanner();
+            }
         }
 
+        // Event Setup Handler
         function saveEventConfig(e) {
             e.preventDefault();
-            eventConfig.title = document.getElementById('cfg-title').value.trim();
-            eventConfig.datetime = document.getElementById('cfg-datetime').value.trim();
-            eventConfig.venue = document.getElementById('cfg-venue').value.trim();
-            eventConfig.organiser = document.getElementById('cfg-organiser').value.trim();
-            eventConfig.desc = document.getElementById('cfg-desc').value.trim();
-            
-            syncDB();
-            alert("Event Details Updated!");
+            eventConfig.title = document.getElementById('cfg-title').value;
+            eventConfig.datetime = document.getElementById('cfg-datetime').value;
+            eventConfig.organiser = document.getElementById('cfg-organiser').value;
+            eventConfig.venue = document.getElementById('cfg-venue').value;
+            eventConfig.desc = document.getElementById('cfg-desc').value;
+
+            localStorage.setItem('ticketsdust_cfg', JSON.stringify(eventConfig));
+            alert('✅ Event profile saved successfully!');
+            renderPhysicalPreview();
         }
 
         function handleFlyerUpload(e) {
             const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                eventConfig.flyerDataUrl = evt.target.result;
-                document.getElementById('flyer-img-preview').src = evt.target.result;
-                syncDB();
-            };
-            reader.readAsDataURL(file);
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    eventConfig.flyerUrl = evt.target.result;
+                    document.getElementById('flyer-img-preview').src = evt.target.result;
+                    renderPhysicalPreview();
+                };
+                reader.readAsDataURL(file);
+            }
         }
 
-        // Generate Digital Pass
+        function loadSavedConfig() {
+            const saved = localStorage.getItem('ticketsdust_cfg');
+            if (saved) {
+                eventConfig = JSON.parse(saved);
+                document.getElementById('cfg-title').value = eventConfig.title;
+                document.getElementById('cfg-datetime').value = eventConfig.datetime;
+                document.getElementById('cfg-organiser').value = eventConfig.organiser;
+                document.getElementById('cfg-venue').value = eventConfig.venue;
+                document.getElementById('cfg-desc').value = eventConfig.desc;
+                if (eventConfig.flyerUrl) {
+                    document.getElementById('flyer-img-preview').src = eventConfig.flyerUrl;
+                }
+            }
+        }
+
+        // Digital Ticket Generator
         function generateTicket(e) {
             e.preventDefault();
-            const name = document.getElementById('guest-name').value.trim();
+            const name = document.getElementById('guest-name').value;
             const category = document.getElementById('ticket-cat').value;
             const price = parseFloat(document.getElementById('ticket-price').value) || 0;
-            const seat = document.getElementById('ticket-seat').value.trim() || 'General Entry';
-
+            const seat = document.getElementById('ticket-seat').value || 'General Access';
+            
             const ticketId = 'TD-' + Math.floor(100000 + Math.random() * 900000);
-            const tokenHash = Math.random().toString(36).substring(2, 10);
+            const token = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
 
-            const newTicket = {
+            currentTicket = {
                 id: ticketId,
-                type: 'DIGITAL',
                 name: name,
                 category: category,
                 price: price,
                 seat: seat,
-                token: tokenHash,
-                status: 'VALID',
-                issuedAt: new Date().toLocaleString(),
-                scannedAt: '-'
+                token: token,
+                used: false,
+                type: 'Digital PDF',
+                issuedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
 
-            tickets.push(newTicket);
-            syncDB();
+            ticketsDatabase.push(currentTicket);
+            saveTicketsToStorage();
 
-            activeTicketForPDF = newTicket;
-            renderTicketPreview(newTicket);
-        }
-
-        function renderTicketPreview(t) {
+            // Render Preview UI
             document.getElementById('ticket-stub-empty').classList.add('hidden');
             document.getElementById('ticket-preview-box').classList.remove('hidden');
 
-            document.getElementById('stub-flyer-img').src = eventConfig.flyerDataUrl;
-            document.getElementById('stub-category').innerText = t.category;
-            document.getElementById('stub-id').innerText = t.id;
+            document.getElementById('stub-flyer-img').src = eventConfig.flyerUrl;
+            document.getElementById('stub-category').innerText = category;
+            document.getElementById('stub-id').innerText = ticketId;
             document.getElementById('stub-event-title').innerText = eventConfig.title;
             document.getElementById('stub-event-venue').innerText = eventConfig.venue;
-            document.getElementById('stub-guest-name').innerText = t.name;
+            document.getElementById('stub-guest-name').innerText = name;
             document.getElementById('stub-datetime').innerText = eventConfig.datetime;
-            document.getElementById('stub-seat').innerText = t.seat;
-            document.getElementById('stub-token-hash').innerText = t.token;
+            document.getElementById('stub-seat').innerText = seat;
+            document.getElementById('stub-token-hash').innerText = token.substring(0, 12) + '...';
 
+            // Generate Barcode & QR Code
+            JsBarcode("#stub-barcode", ticketId, { format: "CODE128", width: 1.5, height: 35, displayValue: false });
+            
             const qrContainer = document.getElementById('stub-qrcode');
             qrContainer.innerHTML = '';
-            new QRCode(qrContainer, {
-                text: t.id,
-                width: 110,
-                height: 110,
-                colorDark: "#000000",
-                colorLight: "#ffffff"
-            });
+            new QRCode(qrContainer, { text: ticketId, width: 90, height: 90 });
 
-            JsBarcode("#stub-barcode", t.id, {
-                format: "CODE128",
-                height: 35,
-                displayValue: false,
-                lineColor: "#000000"
-            });
+            updateStats();
         }
 
-        // Physical Banner Ticket Generator
+        // PDF Generation
+        function downloadPDF() {
+            if (!currentTicket) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a5');
+
+            doc.setFillColor(7, 9, 14);
+            doc.rect(0, 0, 148, 210, 'F');
+
+            doc.setTextColor(249, 115, 22);
+            doc.setFontSize(22);
+            doc.setFont('helvetica', 'bold');
+            doc.text("TicketsDust PRO Pass", 15, 20);
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(14);
+            doc.text(eventConfig.title, 15, 32);
+
+            doc.setTextColor(148, 163, 184);
+            doc.setFontSize(10);
+            doc.text(`Venue: ${eventConfig.venue}`, 15, 40);
+            doc.text(`Date: ${eventConfig.datetime}`, 15, 46);
+            doc.text(`Organiser: ${eventConfig.organiser}`, 15, 52);
+
+            doc.setDrawColor(51, 65, 85);
+            doc.line(15, 58, 133, 58);
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(12);
+            doc.text(`Holder: ${currentTicket.name}`, 15, 68);
+            doc.text(`Tier: ${currentTicket.category}`, 15, 76);
+            doc.text(`Seating: ${currentTicket.seat}`, 15, 84);
+            doc.text(`Price: R ${currentTicket.price}`, 15, 92);
+            doc.text(`Serial ID: ${currentTicket.id}`, 15, 100);
+
+            doc.setFillColor(255, 255, 255);
+            doc.rect(15, 115, 118, 70, 'F');
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            doc.text("Scan barcode or QR code at entry gate for validation.", 20, 125);
+
+            doc.save(`${currentTicket.id}_Pass.pdf`);
+        }
+
+        // Physical Ticket Banner Generator
         function generatePhysicalBannerTicket(e) {
-            if(e) e.preventDefault();
-            const name = document.getElementById('phys-name').value.trim() || 'Door Guest';
+            e.preventDefault();
+            const holder = document.getElementById('phys-name').value;
             const cat = document.getElementById('phys-cat').value;
             const price = parseFloat(document.getElementById('phys-price').value) || 0;
-            const prefix = document.getElementById('phys-prefix').value.trim().toUpperCase() || 'PHYS';
+            const prefix = document.getElementById('phys-prefix').value || 'PHYS';
 
-            const ticketId = prefix + '-' + Math.floor(100000 + Math.random() * 900000);
+            const serial = `${prefix}-${Math.floor(100000 + Math.random() * 900000)}`;
 
-            const physicalTicket = {
-                id: ticketId,
-                type: 'PHYSICAL BANNER',
-                name: name,
+            const physTicket = {
+                id: serial,
+                name: holder,
                 category: cat,
                 price: price,
-                seat: 'In-Person Sale',
-                token: 'PHYS-PAPER-STUB',
-                status: 'VALID',
-                issuedAt: new Date().toLocaleString(),
-                scannedAt: '-'
+                seat: 'Physical Stub',
+                token: 'STUB-' + Math.random().toString(36).substring(2, 8),
+                used: false,
+                type: 'Physical Banner',
+                issuedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
 
-            tickets.push(physicalTicket);
-            syncDB();
+            ticketsDatabase.push(physTicket);
+            saveTicketsToStorage();
 
-            renderPhysicalBanner(physicalTicket);
+            // Render on Stub
+            renderPhysicalPreview(physTicket);
+            updateStats();
         }
 
-        function renderInitialPhysicalBanner() {
-            const dummy = {
-                id: 'PHYS-' + Math.floor(100000 + Math.random() * 900000),
-                type: 'PHYSICAL BANNER',
-                name: 'Door Sale Guest',
-                category: 'STANDARD ENTRY',
-                price: 150,
-                seat: 'In-Person Sale',
-                token: 'PHYS-PAPER-STUB',
-                status: 'VALID'
+        function renderPhysicalPreview(ticketData = null) {
+            const data = ticketData || {
+                id: 'PHYS-773910',
+                name: document.getElementById('phys-name').value,
+                category: document.getElementById('phys-cat').value,
+                price: parseFloat(document.getElementById('phys-price').value) || 150
             };
-            tickets.push(dummy);
-            syncDB();
-            renderPhysicalBanner(dummy);
-        }
 
-        function renderPhysicalBanner(t) {
-            document.getElementById('phys-banner-img').src = eventConfig.flyerDataUrl;
+            document.getElementById('phys-banner-img').src = eventConfig.flyerUrl;
             document.getElementById('phys-card-title').innerText = eventConfig.title;
             document.getElementById('phys-card-venue').innerText = eventConfig.venue;
             document.getElementById('phys-card-datetime').innerText = eventConfig.datetime;
-            document.getElementById('phys-card-price').innerText = `R ${t.price}`;
-            document.getElementById('phys-card-cat').innerText = t.category;
-            document.getElementById('phys-card-holder').innerText = t.name;
-            document.getElementById('phys-card-id').innerText = t.id;
-            document.getElementById('phys-stub-id').innerText = t.id;
-            document.getElementById('phys-stub-cat').innerText = t.category;
+            document.getElementById('phys-card-price').innerText = `R ${data.price}`;
+            document.getElementById('phys-card-cat').innerText = data.category;
+            document.getElementById('phys-card-holder').innerText = data.name;
+            document.getElementById('phys-card-id').innerText = data.id;
+            document.getElementById('phys-stub-id').innerText = data.id;
+            document.getElementById('phys-stub-cat').innerText = data.category;
+
+            JsBarcode("#phys-card-barcode", data.id, { format: "CODE128", width: 1.2, height: 28, displayValue: false });
 
             const qrContainer = document.getElementById('phys-card-qrcode');
             qrContainer.innerHTML = '';
-            new QRCode(qrContainer, {
-                text: t.id,
-                width: 75,
-                height: 75,
-                colorDark: "#000000",
-                colorLight: "#ffffff"
-            });
-
-            JsBarcode("#phys-card-barcode", t.id, {
-                format: "CODE128",
-                height: 30,
-                displayValue: false,
-                lineColor: "#000000"
-            });
+            new QRCode(qrContainer, { text: data.id, width: 55, height: 55 });
         }
 
-        function downloadPDF() {
-            if (!activeTicketForPDF) return;
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [100, 160] });
-
-            doc.setFillColor(10, 12, 18);
-            doc.rect(0, 0, 100, 160, 'F');
-            doc.setDrawColor(249, 115, 22);
-            doc.setLineWidth(0.8);
-            doc.rect(4, 4, 92, 152);
-
-            try {
-                doc.addImage(eventConfig.flyerDataUrl, 'JPEG', 6, 6, 88, 45);
-            } catch (err) {
-                doc.setFillColor(30, 30, 40);
-                doc.rect(6, 6, 88, 45, 'F');
-            }
-
-            doc.setFillColor(10, 12, 18);
-            doc.rect(6, 42, 88, 12, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text(eventConfig.title.toUpperCase(), 50, 49, { align: "center", maxWidth: 84 });
-
-            doc.setTextColor(249, 115, 22);
-            doc.setFontSize(8);
-            doc.text(activeTicketForPDF.category.toUpperCase(), 50, 57, { align: "center" });
-
-            doc.setDrawColor(40, 45, 60);
-            doc.line(8, 60, 92, 60);
-
-            doc.setTextColor(150, 150, 160);
-            doc.setFontSize(7);
-            doc.text("GUEST NAME:", 10, 67);
-            doc.setFontSize(11);
-            doc.setTextColor(255, 255, 255);
-            doc.text(activeTicketForPDF.name, 10, 73);
-
-            doc.setFontSize(7);
-            doc.setTextColor(150, 150, 160);
-            doc.text("TICKET SERIAL:", 60, 67);
-            doc.setFontSize(10);
-            doc.setTextColor(249, 115, 22);
-            doc.text(activeTicketForPDF.id, 60, 73);
-
-            doc.setFontSize(7);
-            doc.setTextColor(150, 150, 160);
-            doc.text("DATE & TIME:", 10, 81);
-            doc.setFontSize(8);
-            doc.setTextColor(220, 220, 230);
-            doc.text(eventConfig.datetime, 10, 86, { maxWidth: 80 });
-
-            doc.setFontSize(7);
-            doc.setTextColor(150, 150, 160);
-            doc.text("VENUE:", 10, 93);
-            doc.setFontSize(8);
-            doc.setTextColor(220, 220, 230);
-            doc.text(eventConfig.venue, 10, 98, { maxWidth: 80 });
-
-            const qrCanvas = document.querySelector('#stub-qrcode canvas');
-            if (qrCanvas) {
-                const qrImg = qrCanvas.toDataURL("image/png");
-                doc.addImage(qrImg, 'PNG', 32, 104, 36, 36);
-            }
-
-            doc.save(`${activeTicketForPDF.id}-${activeTicketForPDF.name.replace(/\s+/g, '_')}.pdf`);
-        }
-
-        // Gate Scanner Controls
+        // Camera Scanner Engine
         function startScanner() {
-            if (html5QrCode) stopScanner();
-            html5QrCode = new Html5Qrcode("reader");
             document.getElementById('scan-mode-badge').innerText = "Camera Active";
-            document.getElementById('scan-mode-badge').className = "px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold uppercase rounded-full";
+            document.getElementById('scan-mode-badge').className = "px-3 py-1 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase rounded-full";
 
-            html5QrCode.start(
+            html5QrScanner = new Html5Qrcode("reader");
+            html5QrScanner.start(
                 { facingMode: "environment" },
-                { fps: 12, qrbox: { width: 220, height: 220 } },
-                onScanSuccess
-            ).catch(err => alert("Camera permission error: " + err));
+                { fps: 10, qrbox: { width: 220, height: 220 } },
+                (decodedText) => {
+                    verifyTicketCode(decodedText);
+                },
+                (errorMessage) => {
+                    // scanning...
+                }
+            ).catch(err => {
+                alert("Camera access denied or unavailable.");
+            });
         }
 
         function stopScanner() {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    html5QrCode = null;
+            if (html5QrScanner) {
+                html5QrScanner.stop().then(() => {
                     document.getElementById('scan-mode-badge').innerText = "Camera Standby";
                     document.getElementById('scan-mode-badge').className = "px-3 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold uppercase rounded-full";
-                }).catch(() => {});
+                }).catch(err => console.error(err));
             }
         }
 
         function verifyManualCode() {
             const input = document.getElementById('manual-code-input').value.trim();
-            if (input) onScanSuccess(input);
+            if (input) {
+                verifyTicketCode(input);
+            }
         }
 
-        function onScanSuccess(decodedText) {
-            const ticket = tickets.find(t => t.id.toLowerCase() === decodedText.trim().toLowerCase());
+        function verifyTicketCode(code) {
             const resultBox = document.getElementById('scan-result');
             const icon = document.getElementById('result-status-icon');
             const title = document.getElementById('result-status-title');
             const desc = document.getElementById('result-status-desc');
             const meta = document.getElementById('result-meta');
 
-            resultBox.classList.remove('hidden', 'bg-emerald-950/90', 'border-emerald-500', 'text-emerald-200', 'bg-rose-950/90', 'border-rose-500', 'text-rose-200', 'bg-amber-950/90', 'border-amber-500', 'text-amber-200');
+            resultBox.classList.remove('hidden');
+
+            const ticket = ticketsDatabase.find(t => t.id === code);
 
             if (!ticket) {
-                playBeep('invalid');
-                resultBox.classList.add('bg-rose-950/90', 'border-rose-500', 'text-rose-200');
+                resultBox.className = "p-6 rounded-3xl text-center space-y-3 border-2 border-rose-500/50 bg-rose-950/40 text-rose-200 shadow-2xl";
                 icon.innerText = "❌";
                 title.innerText = "INVALID TICKET";
-                desc.innerText = "Serial code unrecognized in system database.";
-                meta.innerHTML = `<div><b>Scanned Code:</b> ${decodedText}</div><div><b>Status:</b> Rejected</div>`;
-            } else if (ticket.status === 'USED') {
-                playBeep('invalid');
-                resultBox.classList.add('bg-amber-950/90', 'border-amber-500', 'text-amber-200');
-                icon.innerText = "🔴";
-                title.innerText = "ALREADY USED";
-                desc.innerText = "Warning: Ticket already scanned at gate.";
-                meta.innerHTML = `
-                    <div><b>Holder:</b> ${ticket.name}</div>
-                    <div><b>Category:</b> ${ticket.category}</div>
-                    <div><b>Ticket ID:</b> ${ticket.id}</div>
-                    <div><b>Prior Entry:</b> ${ticket.scannedAt}</div>
-                `;
-            } else {
-                playBeep('valid');
-                ticket.status = 'USED';
-                ticket.scannedAt = new Date().toLocaleTimeString() + ', ' + new Date().toLocaleDateString();
-                syncDB();
+                desc.innerText = `Serial ${code} was not found in the official ledger database.`;
+                meta.innerHTML = `<div><strong>Status:</strong> Unrecognized</div><div><strong>Code:</strong> ${code}</div>`;
+                return;
+            }
 
-                resultBox.classList.add('bg-emerald-950/90', 'border-emerald-500', 'text-emerald-200');
-                icon.innerText = "✅";
-                title.innerText = "VALID - ENTRY GRANTED";
-                desc.innerText = "Allow entry into venue.";
+            if (ticket.used) {
+                resultBox.className = "p-6 rounded-3xl text-center space-y-3 border-2 border-amber-500/50 bg-amber-950/40 text-amber-200 shadow-2xl";
+                icon.innerText = "⚠️";
+                title.innerText = "ALREADY USED";
+                desc.innerText = `Ticket ${ticket.id} was previously checked in! Do not grant entry twice.`;
                 meta.innerHTML = `
-                    <div><b>Holder:</b> ${ticket.name}</div>
-                    <div><b>Type:</b> ${ticket.type}</div>
-                    <div><b>Tier Category:</b> ${ticket.category}</div>
-                    <div><b>Ticket ID:</b> ${ticket.id}</div>
+                    <div><strong>Holder:</strong> ${ticket.name}</div>
+                    <div><strong>Category:</strong> ${ticket.category}</div>
+                    <div><strong>Type:</strong> ${ticket.type}</div>
+                    <div><strong>Status:</strong> Checked-In</div>
                 `;
+                return;
+            }
+
+            // Valid Entrance
+            ticket.used = true;
+            saveTicketsToStorage();
+            updateStats();
+
+            resultBox.className = "p-6 rounded-3xl text-center space-y-3 border-2 border-emerald-500/50 bg-emerald-950/40 text-emerald-200 shadow-2xl";
+            icon.innerText = "✅";
+            title.innerText = "ENTRY APPROVED";
+            desc.innerText = `Welcome, ${ticket.name}! Ticket verified and successfully marked as checked-in.`;
+            meta.innerHTML = `
+                <div><strong>Holder:</strong> ${ticket.name}</div>
+                <div><strong>Category:</strong> ${ticket.category}</div>
+                <div><strong>Serial:</strong> ${ticket.id}</div>
+                <div><strong>Type:</strong> ${ticket.type}</div>
+            `;
+        }
+
+        // Database & Stats Storage
+        function saveTicketsToStorage() {
+            localStorage.setItem('ticketsdust_db', JSON.stringify(ticketsDatabase));
+        }
+
+        function loadSavedTickets() {
+            const saved = localStorage.getItem('ticketsdust_db');
+            if (saved) {
+                ticketsDatabase = JSON.parse(saved);
             }
         }
 
-        // Live Dashboard Engine
-        function updateDashboard() {
-            const total = tickets.length;
-            const used = tickets.filter(t => t.status === 'USED').length;
+        function updateStats() {
+            const total = ticketsDatabase.length;
+            const used = ticketsDatabase.filter(t => t.used).length;
             const pending = total - used;
-            const revenue = tickets.reduce((acc, t) => acc + (t.price || 0), 0);
+            const revenue = ticketsDatabase.reduce((sum, t) => sum + (t.price || 0), 0);
 
             document.getElementById('stat-total').innerText = total;
             document.getElementById('stat-used').innerText = used;
             document.getElementById('stat-pending').innerText = pending;
             document.getElementById('stat-revenue').innerText = `R ${revenue.toLocaleString()}`;
 
-            const tbody = document.getElementById('ticket-table-body');
+            renderLedgerTable();
+        }
+
+        function renderLedgerTable() {
+            const tbody = document.getElementById('ledger-table-body');
             tbody.innerHTML = '';
 
-            tickets.forEach(t => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-800/30 transition border-b border-slate-800/40";
-                
-                const statusBadge = t.status === 'USED' 
-                    ? `<span class="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-black text-[10px] rounded-full">CHECKED IN</span>`
-                    : `<span class="px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-black text-[10px] rounded-full">PENDING</span>`;
+            if (ticketsDatabase.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500">No tickets generated yet.</td></tr>`;
+                return;
+            }
 
+            ticketsDatabase.slice().reverse().forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/30 transition";
                 tr.innerHTML = `
-                    <td class="px-6 py-4 font-mono-code font-bold text-white">${t.id}</td>
-                    <td class="px-6 py-4 font-semibold text-amber-400 text-[10px] uppercase">${t.type || 'DIGITAL'}</td>
-                    <td class="px-6 py-4 font-semibold text-white">${t.name}</td>
-                    <td class="px-6 py-4 text-slate-400">${t.category}</td>
-                    <td class="px-6 py-4 font-mono-code text-white">R ${t.price}</td>
-                    <td class="px-6 py-4">${statusBadge}</td>
-                    <td class="px-6 py-4 text-slate-400 font-mono-code text-[11px]">${t.scannedAt}</td>
+                    <td class="p-3 font-mono-code font-bold text-amber-400">${t.id}</td>
+                    <td class="p-3 font-bold text-white">${t.name}</td>
+                    <td class="p-3">${t.category}</td>
+                    <td class="p-3 font-mono-code">R ${t.price}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 bg-slate-800 text-slate-300 rounded-full text-[10px]">${t.type}</span></td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${t.used ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}">
+                            ${t.used ? 'Checked-In' : 'Active'}
+                        </span>
+                    </td>
+                    <td class="p-3 text-slate-500 text-[10px]">${t.issuedAt || 'N/A'}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function exportDatabaseJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tickets, null, 2));
-            const dlAnchor = document.createElement('a');
-            dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", "TicketsDust_Master_Ledger.json");
-            dlAnchor.click();
-        }
-
-        function clearDatabase() {
-            if (confirm("Reset all stored digital/physical tickets and gate history?")) {
-                tickets = [];
-                syncDB();
+        function clearLedger() {
+            if (confirm("Are you sure you want to clear all issued ticket records?")) {
+                ticketsDatabase = [];
+                saveTicketsToStorage();
+                updateStats();
             }
         }
-
-        // Initialize App
-        updateDashboard();
     </script>
 </body>
 </html>
