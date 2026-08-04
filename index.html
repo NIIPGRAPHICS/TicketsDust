@@ -614,6 +614,7 @@
                 <div id="scan-result" class="scan-result">
                     <h3 id="result-title">Valid Ticket</h3>
                     <p id="result-details" style="margin-top: 0.5rem;"></p>
+                    <button class="btn btn-secondary" style="margin-top: 1rem;" onclick="resumeScanning()">📷 Scan Next Ticket</button>
                 </div>
             </div>
         </div>
@@ -655,6 +656,7 @@
     <script>
         const DB_KEY = "ticketsdust_banner_db_v4";
         let html5QrcodeScanner = null;
+        let isScanningPaused = false;
         let currentBatch = [];
 
         function getDB() {
@@ -698,7 +700,7 @@
 
         function generateTicketCode(prefix = "TD") {
             const random = Math.floor(100000 + Math.random() * 900000);
-            return `${prefix}-${Date.now().toString().slice(-4)}-${random}`;
+            return `${prefix}-${Date.now().toString().slice(-4)}-${random}`.toUpperCase();
         }
 
         // 1. Single Banner Generator
@@ -893,10 +895,11 @@
             html2pdf().set(opt).from(element).save();
         }
 
-        // Camera Scanner
+        // Camera Scanner & Verifier
         function startCamera() {
             document.getElementById('start-scan-btn').style.display = 'none';
             document.getElementById('stop-scan-btn').style.display = 'inline-block';
+            isScanningPaused = false;
 
             html5QrcodeScanner = new Html5Qrcode("reader");
             html5QrcodeScanner.start(
@@ -919,20 +922,37 @@
             }
             document.getElementById('start-scan-btn').style.display = 'inline-block';
             document.getElementById('stop-scan-btn').style.display = 'none';
+            isScanningPaused = false;
         }
 
         function onScanSuccess(decodedText) {
-            processValidation(decodedText.trim());
+            if (isScanningPaused) return;
+            isScanningPaused = true;
+
+            if (html5QrcodeScanner) {
+                try { html5QrcodeScanner.pause(true); } catch(e) {}
+            }
+
+            processValidation(decodedText.trim().toUpperCase());
         }
 
         function onScanFailure(error) {}
 
+        function resumeScanning() {
+            isScanningPaused = false;
+            document.getElementById('scan-result').style.display = 'none';
+            if (html5QrcodeScanner) {
+                try { html5QrcodeScanner.resume(); } catch(e) {}
+            }
+        }
+
         function validateManualCode() {
-            const input = document.getElementById('manual-code').value.trim();
+            const input = document.getElementById('manual-code').value.trim().toUpperCase();
             if (input) processValidation(input);
         }
 
-        function processValidation(code) {
+        function processValidation(rawCode) {
+            const code = rawCode.trim().toUpperCase();
             const db = getDB();
             const resultBox = document.getElementById('scan-result');
             const titleEl = document.getElementById('result-title');
@@ -944,7 +964,7 @@
             if (!db[code]) {
                 resultBox.classList.add("invalid");
                 titleEl.innerText = "❌ INVALID TICKET";
-                detailsEl.innerHTML = `Code <strong>${code}</strong> not found.`;
+                detailsEl.innerHTML = `Code <strong>${code}</strong> not found in database.`;
                 return;
             }
 
