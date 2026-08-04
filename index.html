@@ -3,892 +3,580 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TicketsDust | Event Ticketing & Physical Banner Engine</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html5-qrcode Scanner -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <!-- qrcodejs for High-Res QR Code Generation -->
+    <title>TicketsDust - Event & Bulk Ticket Portal</title>
+    <!-- QRCode.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- jsPDF for Professional Printable PDF Generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- JsBarcode for Security Barcodes -->
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .font-mono-code { font-family: 'Space Grotesk', monospace; }
-        
-        /* Print Stylesheet for Physical Banner Tickets */
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* Nav Tabs */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            background-color: var(--card-bg);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Form Controls */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-light);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--border-color);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+        }
+
+        /* Printable / Display Grid for Tickets */
+        .tickets-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .tickets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .ticket-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px dashed var(--accent);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .ticket-header-brand {
+            font-size: 0.75rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .ticket-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0.25rem 0;
+            color: white;
+        }
+
+        .ticket-info {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 1rem;
+        }
+
+        .ticket-info span {
+            color: white;
+            font-weight: 600;
+        }
+
+        .ticket-qr-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+            width: fit-content;
+            align-self: center;
+        }
+
+        .ticket-id {
+            font-family: monospace;
+            font-size: 0.8rem;
+            text-align: center;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            background-color: var(--accent);
+            color: white;
+            width: fit-content;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Print Specific Styles */
         @media print {
-            body * {
-                visibility: hidden;
+            body {
+                background: white;
+                color: black;
             }
-            #physical-ticket-print-area, #physical-ticket-print-area * {
-                visibility: visible;
-            }
-            #physical-ticket-print-area {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-            }
-            .no-print {
+            .tabs, header, .card, .actions, .no-print {
                 display: none !important;
             }
+            .tab-content {
+                display: block !important;
+            }
+            .tickets-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            .ticket-card {
+                background: white !important;
+                border: 2px solid #000 !important;
+                color: black !important;
+                page-break-inside: avoid;
+                box-shadow: none !important;
+            }
+            .ticket-title, .ticket-info span {
+                color: black !important;
+            }
+            .ticket-info, .ticket-id {
+                color: #333 !important;
+            }
+            .badge {
+                border: 1px solid #000;
+                background: #eee !important;
+                color: #000 !important;
+            }
         }
-
-        /* Physical Banner Tear-Off Cut Line Styling */
-        .tear-off-line {
-            border-left: 2px dashed #475569;
-            position: relative;
-        }
-        .tear-off-line::before, .tear-off-line::after {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            background-color: #07090e;
-            border-radius: 50%;
-            left: -9px;
-        }
-        .tear-off-line::before { top: -8px; }
-        .tear-off-line::after { bottom: -8px; }
     </style>
 </head>
-<body class="bg-[#07090e] text-slate-100 min-h-screen pb-16 antialiased selection:bg-orange-500 selection:text-black">
+<body>
 
-    <!-- Navigation Bar -->
-    <nav class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-xl sticky top-0 z-50 no-print">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap justify-between items-center gap-4">
-            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('event-setup')">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-black font-black text-xl shadow-lg shadow-orange-500/20">
-                    🎟️
+    <div class="container">
+        <header class="no-print">
+            <h1>TicketsDust Portal</h1>
+            <p>Single & Bulk Ticket Generation System with Live QR Validation</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs no-print">
+            <button class="tab-btn" onclick="switchTab('single')">Single Ticket</button>
+            <button class="tab-btn active" onclick="switchTab('bulk')">Bulk Tickets</button>
+        </div>
+
+        <!-- SINGLE TICKET TAB -->
+        <div id="tab-single" class="tab-content">
+            <div class="card no-print">
+                <h2>Single Ticket Generator</h2>
+                <div class="form-grid" style="margin-top: 1rem;">
+                    <div class="form-group">
+                        <label>Event Name</label>
+                        <input type="text" id="s-event" value="Selective Saturdays">
+                    </div>
+                    <div class="form-group">
+                        <label>Holder Name</label>
+                        <input type="text" id="s-name" placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Ticket Tier</label>
+                        <select id="s-tier">
+                            <option value="General Admission">General Admission</option>
+                            <option value="VIP Pass">VIP Pass</option>
+                            <option value="VVIP Access">VVIP Access</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="s-date">
+                    </div>
+                </div>
+                <div class="actions">
+                    <button class="btn" onclick="generateSingleTicket()">Generate Ticket</button>
+                </div>
+            </div>
+
+            <div id="single-ticket-output" class="tickets-grid"></div>
+        </div>
+
+        <!-- BULK TICKETS TAB -->
+        <div id="tab-bulk" class="tab-content active">
+            <div class="card no-print">
+                <h2>Bulk Ticket Generator</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0.5rem 0 1.5rem 0;">
+                    Generate multiple tickets with unique serial IDs and scannable QR codes simultaneously.
+                </p>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Event Name</label>
+                        <input type="text" id="b-event" value="Selective Saturdays">
+                    </div>
+                    <div class="form-group">
+                        <label>Ticket Tier</label>
+                        <select id="b-tier">
+                            <option value="General Admission">General Admission</option>
+                            <option value="VIP Pass">VIP Pass</option>
+                            <option value="Early Bird">Early Bird</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Price per Ticket (ZAR)</label>
+                        <input type="number" id="b-price" value="150">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity to Generate</label>
+                        <input type="number" id="b-qty" value="12" min="1" max="200">
+                    </div>
+                    <div class="form-group">
+                        <label>Event Date</label>
+                        <input type="date" id="b-date">
+                    </div>
+                    <div class="form-group">
+                        <label>Venue</label>
+                        <input type="text" id="b-venue" value="Durban Central, KZN">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Attendee Names (Optional - One name per line. Overrides quantity count if provided)</label>
+                        <textarea id="b-names" rows="4" placeholder="Sipho Ndlovu&#10;Ayanda Khumalo&#10;Thabo Mokoena"></textarea>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn" onclick="generateBulkTickets()">Generate Bulk Batch</button>
+                </div>
+            </div>
+
+            <!-- Bulk Output Controls -->
+            <div id="bulk-controls" class="tickets-header no-print" style="display: none;">
+                <div>
+                    <h3 id="batch-count-title">Generated Tickets</h3>
+                    <p style="color: var(--text-muted); font-size: 0.85rem;">Ready for download, export, or print layout.</p>
+                </div>
+                <div class="actions" style="margin-top: 0;">
+                    <button class="btn btn-success" onclick="exportCSV()">Export Batch as CSV</button>
+                    <button class="btn btn-secondary" onclick="window.print()">Print Batch Layout</button>
+                    <button class="btn btn-secondary" onclick="clearBulk()">Clear</button>
+                </div>
+            </div>
+
+            <!-- Bulk Tickets Render Grid -->
+            <div id="bulk-tickets-output" class="tickets-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global storage for current bulk batch
+        let currentBatch = [];
+
+        // Set default date to today
+        document.getElementById('s-date').valueAsDate = new Date();
+        document.getElementById('b-date').valueAsDate = new Date();
+
+        // Switch Tabs
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            if (tab === 'single') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('tab-single').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('tab-bulk').classList.add('active');
+            }
+        }
+
+        // Generate Unique Ticket Code
+        function generateTicketCode(prefix = "TD") {
+            const random = Math.floor(100000 + Math.random() * 900000);
+            return `${prefix}-${Date.now().toString().slice(-4)}-${random}`;
+        }
+
+        // Single Ticket Generator
+        function generateSingleTicket() {
+            const container = document.getElementById('single-ticket-output');
+            container.innerHTML = "";
+
+            const eventName = document.getElementById('s-event').value || "Event";
+            const holderName = document.getElementById('s-name').value || "Guest Holder";
+            const tier = document.getElementById('s-tier').value;
+            const date = document.getElementById('s-date').value;
+            const code = generateTicketCode();
+
+            const ticketElement = createTicketCard({
+                eventName,
+                holderName,
+                tier,
+                date,
+                code,
+                venue: "Main Venue"
+            });
+
+            container.appendChild(ticketElement);
+        }
+
+        // Bulk Ticket Generator
+        function generateBulkTickets() {
+            const container = document.getElementById('bulk-tickets-output');
+            container.innerHTML = "";
+            currentBatch = [];
+
+            const eventName = document.getElementById('b-event').value || "Event";
+            const tier = document.getElementById('b-tier').value;
+            const price = document.getElementById('b-price').value;
+            const date = document.getElementById('b-date').value;
+            const venue = document.getElementById('b-venue').value || "Main Venue";
+            
+            const rawNames = document.getElementById('b-names').value.trim();
+            let namesList = rawNames ? rawNames.split('\n').map(n => n.trim()).filter(n => n.length > 0) : [];
+
+            let qty = namesList.length > 0 ? namesList.length : parseInt(document.getElementById('b-qty').value) || 1;
+
+            for (let i = 0; i < qty; i++) {
+                const holderName = namesList[i] ? namesList[i] : `General Guest #${i + 1}`;
+                const code = generateTicketCode("BULK");
+
+                const ticketData = {
+                    eventName,
+                    holderName,
+                    tier,
+                    price: `R${price}`,
+                    date,
+                    venue,
+                    code
+                };
+
+                currentBatch.push(ticketData);
+
+                const card = createTicketCard(ticketData);
+                container.appendChild(card);
+            }
+
+            // Show bulk controls header
+            document.getElementById('bulk-controls').style.display = 'flex';
+            document.getElementById('batch-count-title').innerText = `Generated (${currentBatch.length}) Tickets`;
+        }
+
+        // Build Ticket HTML Card & QR Code
+        function createTicketCard(data) {
+            const card = document.createElement('div');
+            card.className = 'ticket-card';
+
+            const qrContainerId = `qr-${data.code}`;
+
+            card.innerHTML = `
+                <div>
+                    <div class="ticket-header-brand">TicketsDust Official</div>
+                    <div class="ticket-title">${data.eventName}</div>
+                    <div class="badge">${data.tier}</div>
+                    <div class="ticket-info">
+                        Holder: <span>${data.holderName}</span><br>
+                        Date: <span>${data.date}</span><br>
+                        Venue: <span>${data.venue}</span>
+                        ${data.price ? `<br>Price: <span>${data.price}</span>` : ''}
+                    </div>
                 </div>
                 <div>
-                    <h1 class="text-xl font-black tracking-tight text-white flex items-center gap-1.5">
-                        Tickets<span class="text-orange-500">Dust</span>
-                        <span class="text-[9px] uppercase px-2 py-0.5 bg-orange-500/10 border border-orange-500/30 text-orange-400 font-extrabold rounded-full tracking-widest">PRO</span>
-                    </h1>
-                    <p class="text-[10px] uppercase font-bold tracking-widest text-slate-400">Physical Sales & Gate Verification Engine</p>
-                </div>
-            </div>
-
-            <!-- Portal Navigation Tabs -->
-            <div class="flex bg-slate-900/90 border border-slate-800 rounded-xl p-1 gap-1 text-xs font-bold shadow-inner">
-                <button onclick="switchTab('event-setup')" id="tab-event-setup" class="px-4 py-2 rounded-lg bg-orange-500 text-black font-black transition">
-                    ⚙️ Event Settings
-                </button>
-                <button onclick="switchTab('issue')" id="tab-issue" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
-                    🎟️ Digital Tickets
-                </button>
-                <button onclick="switchTab('physical')" id="tab-physical" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
-                    🏷️ Physical Banner Tickets
-                </button>
-                <button onclick="switchTab('scanner')" id="tab-scanner" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
-                    📱 Gate Scanner
-                </button>
-                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">
-                    📊 Live Analytics
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
-
-        <!-- TAB 1: EVENT SETUP -->
-        <section id="sec-event-setup" class="space-y-6">
-            <div class="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 sm:p-8 backdrop-blur-xl">
-                <div class="border-b border-slate-800 pb-4 mb-6 flex justify-between items-center flex-wrap gap-4">
-                    <div>
-                        <h2 class="text-xl font-black text-white uppercase tracking-tight">1. Configure Event Profile</h2>
-                        <p class="text-xs text-slate-400">Set up event details and artwork flyer for both digital PDFs and physical banner stubs.</p>
+                    <div class="ticket-qr-box">
+                        <div id="${qrContainerId}"></div>
                     </div>
-                    <span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-full">
-                        Status: Active Configuration
-                    </span>
+                    <div class="ticket-id">${data.code}</div>
                 </div>
-
-                <form id="event-config-form" onsubmit="saveEventConfig(event)" class="grid md:grid-cols-12 gap-8">
-                    <div class="md:col-span-7 space-y-4">
-                        <div>
-                            <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">Event Title</label>
-                            <input type="text" id="cfg-title" required value="Selective Saturdays Live in Durban" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-500 text-white font-medium">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">Date & Time</label>
-                                <input type="text" id="cfg-datetime" required value="Saturday, 25 April 2026 • 18:00 till Late" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-500 text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">Organiser / Label</label>
-                                <input type="text" id="cfg-organiser" required value="Soul Dust Records" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-500 text-white">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">Venue Name & Address</label>
-                            <input type="text" id="cfg-venue" required value="Babize Bonke Club, Central Durban, KZN" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-500 text-white">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">Event Lineup / Billing</label>
-                            <textarea id="cfg-desc" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-500 text-white resize-none">Featuring live performances by Freedom MusiQ, Niipseedadust, DJ Nerd, Vico Green, and Special Guests.</textarea>
-                        </div>
-
-                        <button type="submit" class="w-full py-4 bg-orange-500 hover:bg-orange-600 font-extrabold text-black uppercase tracking-wider text-xs rounded-xl transition shadow-lg shadow-orange-500/20">
-                            💾 Save Event Configuration
-                        </button>
-                    </div>
-
-                    <div class="md:col-span-5 space-y-4">
-                        <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400">Event Poster / Banner Artwork</label>
-                        
-                        <div class="border-2 border-dashed border-slate-800 hover:border-orange-500/50 rounded-2xl p-4 text-center bg-slate-950/50 transition">
-                            <input type="file" id="flyer-file-input" accept="image/*" onchange="handleFlyerUpload(event)" class="hidden">
-                            
-                            <div id="flyer-preview-container" class="aspect-[4/3] rounded-xl overflow-hidden bg-slate-900 border border-slate-800 flex items-center justify-center relative mb-3">
-                                <img id="flyer-img-preview" src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover">
-                            </div>
-
-                            <button type="button" onclick="document.getElementById('flyer-file-input').click()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white rounded-xl transition">
-                                🖼️ Upload Custom Event Flyer
-                            </button>
-                            <p class="text-[10px] text-slate-500 mt-2">Recommended: High-resolution JPG or PNG.</p>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </section>
-
-        <!-- TAB 2: DIGITAL TICKETS -->
-        <section id="sec-issue" class="hidden space-y-6">
-            <div class="grid lg:grid-cols-12 gap-8 items-start">
-                <div class="lg:col-span-5 bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 sm:p-8 backdrop-blur-xl space-y-4">
-                    <div class="border-b border-slate-800 pb-3">
-                        <h2 class="text-lg font-black text-white uppercase tracking-tight">2. Issue Digital Pass</h2>
-                        <p class="text-xs text-slate-400">Generate a digital ticket for email or PDF download.</p>
-                    </div>
-                    
-                    <form id="issue-form" onsubmit="generateTicket(event)" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">Attendee Full Name</label>
-                            <input type="text" id="guest-name" required placeholder="e.g. Siyabonga Nene" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-500 text-white font-medium">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">Ticket Tier</label>
-                                <select id="ticket-cat" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-500 text-white">
-                                    <option value="General Access">General Access</option>
-                                    <option value="VIP Backstage Pass">VIP Backstage Pass</option>
-                                    <option value="VVIP Booth / Table">VVIP Booth / Table</option>
-                                    <option value="Artist / Crew Pass">Artist / Crew Pass</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">Price (ZAR)</label>
-                                <input type="number" id="ticket-price" value="150" min="0" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-500 text-white">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">Seat / Table (Optional)</label>
-                            <input type="text" id="ticket-seat" placeholder="e.g. Table 04 / Row A" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-500 text-white">
-                        </div>
-
-                        <button type="submit" class="w-full py-4 bg-orange-500 hover:bg-orange-600 font-extrabold text-black uppercase tracking-wider text-xs rounded-xl transition shadow-lg shadow-orange-500/20">
-                            🎟️ Issue Ticket & Render Preview
-                        </button>
-                    </form>
-                </div>
-
-                <div class="lg:col-span-7">
-                    <div id="ticket-stub-empty" class="bg-slate-900/20 border border-slate-800 border-dashed rounded-3xl p-12 text-center text-slate-500 space-y-2">
-                        <span class="text-4xl">🎟️</span>
-                        <p class="text-sm font-bold">No active digital ticket generated yet.</p>
-                    </div>
-
-                    <div id="ticket-preview-box" class="hidden bg-slate-900 border border-orange-500/30 rounded-3xl overflow-hidden shadow-2xl relative">
-                        <div class="relative h-44 bg-slate-950 overflow-hidden border-b border-slate-800">
-                            <img id="stub-flyer-img" src="" class="w-full h-full object-cover opacity-60">
-                            <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
-                            
-                            <div class="absolute top-4 left-4 right-4 flex justify-between items-start">
-                                <span id="stub-category" class="px-3 py-1 bg-orange-500 text-black font-black text-[10px] uppercase tracking-widest rounded-full shadow-lg">
-                                    VIP PASS
-                                </span>
-                                <span class="px-2.5 py-1 bg-black/70 backdrop-blur-md border border-white/10 text-white font-mono-code font-bold text-xs rounded-lg">
-                                    <span id="stub-id">TD-884920</span>
-                                </span>
-                            </div>
-
-                            <div class="absolute bottom-3 left-4 right-4">
-                                <h3 id="stub-event-title" class="text-xl font-black text-white uppercase tracking-tight line-clamp-1">Selective Saturdays Live</h3>
-                                <p id="stub-event-venue" class="text-xs text-orange-400 font-semibold line-clamp-1">Babize Bonke Club, Central Durban</p>
-                            </div>
-                        </div>
-
-                        <div class="p-6 grid sm:grid-cols-12 gap-6 items-center">
-                            <div class="sm:col-span-7 space-y-3">
-                                <div>
-                                    <p class="text-[9px] uppercase font-bold tracking-widest text-slate-500">Guest Name</p>
-                                    <p id="stub-guest-name" class="text-base font-extrabold text-white">Siyabonga Nene</p>
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-2 text-xs">
-                                    <div>
-                                        <p class="text-[9px] uppercase font-bold tracking-widest text-slate-500">Date & Time</p>
-                                        <p id="stub-datetime" class="text-slate-300 font-medium text-[11px]">Sat, 25 Apr 2026</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-[9px] uppercase font-bold tracking-widest text-slate-500">Seating</p>
-                                        <p id="stub-seat" class="text-slate-300 font-medium text-[11px]">General Access</p>
-                                    </div>
-                                </div>
-
-                                <div class="pt-2">
-                                    <p class="text-[9px] uppercase font-bold tracking-widest text-slate-500 mb-1">Barcode</p>
-                                    <svg id="stub-barcode" class="w-full h-10 bg-white p-1 rounded-md"></svg>
-                                </div>
-                            </div>
-
-                            <div class="sm:col-span-5 flex flex-col items-center justify-center border-t sm:border-t-0 sm:border-l border-slate-800 pt-4 sm:pt-0 sm:pl-6 space-y-3">
-                                <div id="stub-qrcode" class="p-2.5 bg-white rounded-2xl shadow-xl"></div>
-                                <p class="text-[9px] text-slate-500 uppercase font-bold tracking-wider text-center">Scan at Gate</p>
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-950 p-4 border-t border-slate-800 flex justify-between items-center flex-wrap gap-2">
-                            <div class="text-[10px] text-slate-500 font-mono-code">
-                                Token: <span id="stub-token-hash">9f8a...3b2c</span>
-                            </div>
-                            <button onclick="downloadPDF()" class="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl transition flex items-center gap-2 shadow-lg shadow-orange-500/20">
-                                📥 Download PDF Ticket
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 3: PHYSICAL BANNER TICKETS (IN-PERSON SALES) -->
-        <section id="sec-physical" class="hidden space-y-6">
-            <div class="grid lg:grid-cols-12 gap-8 items-start">
-                
-                <!-- Physical Ticket Generator Console -->
-                <div class="lg:col-span-4 bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 sm:p-8 backdrop-blur-xl space-y-5">
-                    <div class="border-b border-slate-800 pb-3">
-                        <h2 class="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
-                            <span>🏷️</span> In-Person Physical Ticket
-                        </h2>
-                        <p class="text-xs text-slate-400">Generate horizontal physical banner tickets with tear-off stubs for on-site cash/card sales.</p>
-                    </div>
-
-                    <form id="physical-form" onsubmit="generatePhysicalBannerTicket(event)" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">Customer / Holder Name</label>
-                            <input type="text" id="phys-name" value="Door Sale Guest" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500 text-white font-medium">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">Ticket Tier</label>
-                                <select id="phys-cat" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-amber-500 text-white">
-                                    <option value="STANDARD ENTRY">STANDARD ENTRY</option>
-                                    <option value="VIP PASS">VIP PASS</option>
-                                    <option value="EARLY BIRD">EARLY BIRD</option>
-                                    <option value="ARTIST PASS">ARTIST PASS</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">Price (ZAR)</label>
-                                <input type="number" id="phys-price" value="150" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-amber-500 text-white">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-1">Ticket Serial / Batch Prefix</label>
-                            <input type="text" id="phys-prefix" value="PHYS" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-amber-500 text-white font-mono-code uppercase">
-                        </div>
-
-                        <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 font-extrabold text-black uppercase tracking-wider text-xs rounded-xl transition shadow-lg shadow-amber-500/20">
-                            🏷️ Create Physical Banner Stub
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Printable Banner Stub Preview Surface -->
-                <div class="lg:col-span-8 space-y-4">
-                    <div class="flex justify-between items-center flex-wrap gap-2 bg-slate-900/60 p-4 border border-slate-800 rounded-2xl">
-                        <div>
-                            <h3 class="text-sm font-black text-white uppercase">Physical Ticket Banner Preview</h3>
-                            <p class="text-[11px] text-slate-400">Ready for instant printing or batch ticket printing.</p>
-                        </div>
-                        <button onclick="window.print()" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 font-extrabold text-black text-xs uppercase tracking-wider rounded-xl transition flex items-center gap-2 shadow-lg shadow-emerald-500/20">
-                            🖨️ Print Physical Ticket
-                        </button>
-                    </div>
-
-                    <!-- PRINT TARGET AREA -->
-                    <div id="physical-ticket-print-area">
-                        <div id="physical-stub-card" class="bg-slate-950 border-2 border-amber-500/60 rounded-2xl overflow-hidden shadow-2xl grid grid-cols-12 relative text-slate-100 min-h-[220px]">
-                            
-                            <!-- Left Section: Event Flyer Artwork Banner -->
-                            <div class="col-span-3 relative bg-black overflow-hidden border-r border-slate-800">
-                                <img id="phys-banner-img" src="" class="w-full h-full object-cover">
-                                <div class="absolute inset-0 bg-gradient-to-r from-transparent to-slate-950/80"></div>
-                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-amber-500 text-black font-black text-[8px] uppercase tracking-widest rounded">
-                                    PHYSICAL ISSUE
-                                </div>
-                            </div>
-
-                            <!-- Middle Section: Event & Holder Details -->
-                            <div class="col-span-6 p-5 flex flex-col justify-between space-y-2">
-                                <div>
-                                    <div class="flex justify-between items-start gap-2">
-                                        <h3 id="phys-card-title" class="text-base font-black uppercase tracking-tight text-white line-clamp-1">Selective Saturdays Live</h3>
-                                        <span id="phys-card-price" class="px-2 py-0.5 bg-white/10 text-amber-400 font-mono-code font-bold text-xs rounded border border-amber-500/30">R 150</span>
-                                    </div>
-                                    <p id="phys-card-venue" class="text-[11px] font-semibold text-slate-400 line-clamp-1">Babize Bonke Club, Central Durban</p>
-                                    <p id="phys-card-datetime" class="text-[10px] text-amber-500/90 font-bold">Sat, 25 Apr 2026 • 18:00</p>
-                                </div>
-
-                                <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 space-y-1">
-                                    <div class="flex justify-between text-[10px]">
-                                        <span class="text-slate-500 font-bold uppercase">Ticket Tier:</span>
-                                        <span id="phys-card-cat" class="text-white font-extrabold">STANDARD ENTRY</span>
-                                    </div>
-                                    <div class="flex justify-between text-[10px]">
-                                        <span class="text-slate-500 font-bold uppercase">Holder:</span>
-                                        <span id="phys-card-holder" class="text-slate-200 font-bold">Door Sale Guest</span>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-[8px] uppercase font-bold text-slate-500">Official Serial</p>
-                                        <p id="phys-card-id" class="text-xs font-mono-code font-bold text-amber-400">PHYS-773910</p>
-                                    </div>
-                                    <div class="w-32">
-                                        <svg id="phys-card-barcode" class="w-full h-8 bg-white p-0.5 rounded"></svg>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Right Section: Perforated Tear-Off Gate Stub -->
-                            <div class="col-span-3 bg-slate-900 p-4 tear-off-line flex flex-col items-center justify-between text-center">
-                                <div>
-                                    <span class="text-[8px] uppercase font-black tracking-widest text-slate-500">GATE STUB</span>
-                                    <p id="phys-stub-id" class="text-[10px] font-mono-code font-bold text-amber-400">PHYS-773910</p>
-                                </div>
-
-                                <div id="phys-card-qrcode" class="p-1.5 bg-white rounded-xl shadow-md my-1"></div>
-
-                                <div>
-                                    <p class="text-[8px] uppercase font-extrabold text-slate-400">TEAR AT GATE</p>
-                                    <p id="phys-stub-cat" class="text-[9px] font-black text-white uppercase">STANDARD</p>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- TAB 4: DOOR SCANNER -->
-        <section id="sec-scanner" class="hidden max-w-2xl mx-auto space-y-6">
-            <div class="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 sm:p-8 backdrop-blur-xl text-center space-y-5">
-                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                    <h2 class="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
-                        <span>📱</span> Gate Verification Scanner
-                    </h2>
-                    <span id="scan-mode-badge" class="px-3 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold uppercase rounded-full">
-                        Camera Standby
-                    </span>
-                </div>
-
-                <div class="relative overflow-hidden rounded-2xl border-2 border-slate-800 bg-black min-h-[260px] flex items-center justify-center">
-                    <div id="reader" class="w-full"></div>
-                </div>
-
-                <div class="flex justify-center gap-3 flex-wrap">
-                    <button onclick="startScanner()" class="px-5 py-2.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-black uppercase tracking-wider rounded-xl hover:bg-emerald-500/20 transition flex items-center gap-1.5">
-                        ▶️ Launch Camera
-                    </button>
-                    <button onclick="stopScanner()" class="px-5 py-2.5 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-black uppercase tracking-wider rounded-xl hover:bg-rose-500/20 transition flex items-center gap-1.5">
-                        ⏹️ Turn Off
-                    </button>
-                </div>
-
-                <div class="pt-4 border-t border-slate-800/80">
-                    <p class="text-xs text-slate-400 font-bold mb-2">Manual Ticket Serial Verification</p>
-                    <div class="flex gap-2 max-w-md mx-auto">
-                        <input type="text" id="manual-code-input" placeholder="Enter Serial Code (e.g. PHYS-773910)" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white font-mono-code focus:outline-none focus:border-orange-500">
-                        <button onclick="verifyManualCode()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition">
-                            Verify Serial
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="scan-result" class="hidden p-6 rounded-3xl text-center space-y-3 border-2 transition-all duration-300 shadow-2xl">
-                <div id="result-status-icon" class="text-5xl"></div>
-                <h3 id="result-status-title" class="text-3xl font-black uppercase tracking-tight"></h3>
-                <p id="result-status-desc" class="text-sm font-semibold"></p>
-                
-                <div id="result-meta" class="pt-4 border-t border-white/10 text-xs text-left grid grid-cols-2 gap-2 font-medium"></div>
-            </div>
-        </section>
-
-        <!-- TAB 5: ANALYTICS & DATABASE LEDGER -->
-        <section id="sec-dashboard" class="hidden space-y-6">
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-slate-900/50 border border-slate-800/80 p-5 rounded-2xl">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-500">Total Issued</p>
-                    <p id="stat-total" class="text-4xl font-black text-white mt-1">0</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-5 rounded-2xl">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-emerald-500">Checked In</p>
-                    <p id="stat-used" class="text-4xl font-black text-emerald-400 mt-1">0</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-5 rounded-2xl">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-amber-500">Pending Entrance</p>
-                    <p id="stat-pending" class="text-4xl font-black text-amber-400 mt-1">0</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-5 rounded-2xl">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-orange-500">Total Revenue</p>
-                    <p id="stat-revenue" class="text-4xl font-black text-orange-400 mt-1">R 0</p>
-                </div>
-            </div>
-
-            <!-- Ledger Table -->
-            <div class="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 backdrop-blur-xl">
-                <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-                    <div>
-                        <h3 class="text-lg font-black text-white uppercase tracking-tight">Issued Ticket Ledger</h3>
-                        <p class="text-xs text-slate-400">Real-time local verification database and pass registry.</p>
-                    </div>
-                    <button onclick="clearLedger()" class="px-3 py-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold rounded-xl hover:bg-rose-500/20 transition">
-                        🗑️ Reset All Data
-                    </button>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs">
-                        <thead>
-                            <tr class="border-b border-slate-800 text-slate-400 uppercase text-[10px] font-extrabold tracking-wider">
-                                <th class="p-3">Serial ID</th>
-                                <th class="p-3">Guest / Holder</th>
-                                <th class="p-3">Category</th>
-                                <th class="p-3">Price</th>
-                                <th class="p-3">Type</th>
-                                <th class="p-3">Status</th>
-                                <th class="p-3">Issued Time</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ledger-table-body" class="divide-y divide-slate-800/50 text-slate-300 font-medium">
-                            <!-- Populated dynamically via JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- JavaScript Engine -->
-    <script>
-        // System Data State
-        let eventConfig = {
-            title: "Selective Saturdays Live in Durban",
-            datetime: "Saturday, 25 April 2026 • 18:00 till Late",
-            organiser: "Soul Dust Records",
-            venue: "Babize Bonke Club, Central Durban, KZN",
-            desc: "Featuring live performances by Freedom MusiQ, Niipseedadust, DJ Nerd, Vico Green, and Special Guests.",
-            flyerUrl: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1000&auto=format&fit=crop"
-        };
-
-        let ticketsDatabase = [];
-        let currentTicket = null;
-        let html5QrScanner = null;
-
-        // Initialize App
-        window.addEventListener('DOMContentLoaded', () => {
-            loadSavedConfig();
-            loadSavedTickets();
-            updateStats();
-            renderPhysicalPreview();
-        });
-
-        // Tab Switcher
-        function switchTab(tabId) {
-            const tabs = ['event-setup', 'issue', 'physical', 'scanner', 'dashboard'];
-            tabs.forEach(t => {
-                document.getElementById(`sec-${t}`).classList.add('hidden');
-                const btn = document.getElementById(`tab-${t}`);
-                if (btn) {
-                    btn.className = "px-4 py-2 rounded-lg text-slate-400 hover:text-white transition";
-                }
-            });
-
-            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
-            const activeBtn = document.getElementById(`tab-${tabId}`);
-            if (activeBtn) {
-                activeBtn.className = "px-4 py-2 rounded-lg bg-orange-500 text-black font-black transition";
-            }
-
-            if (tabId !== 'scanner' && html5QrScanner) {
-                stopScanner();
-            }
-        }
-
-        // Event Setup Handler
-        function saveEventConfig(e) {
-            e.preventDefault();
-            eventConfig.title = document.getElementById('cfg-title').value;
-            eventConfig.datetime = document.getElementById('cfg-datetime').value;
-            eventConfig.organiser = document.getElementById('cfg-organiser').value;
-            eventConfig.venue = document.getElementById('cfg-venue').value;
-            eventConfig.desc = document.getElementById('cfg-desc').value;
-
-            localStorage.setItem('ticketsdust_cfg', JSON.stringify(eventConfig));
-            alert('✅ Event profile saved successfully!');
-            renderPhysicalPreview();
-        }
-
-        function handleFlyerUpload(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    eventConfig.flyerUrl = evt.target.result;
-                    document.getElementById('flyer-img-preview').src = evt.target.result;
-                    renderPhysicalPreview();
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function loadSavedConfig() {
-            const saved = localStorage.getItem('ticketsdust_cfg');
-            if (saved) {
-                eventConfig = JSON.parse(saved);
-                document.getElementById('cfg-title').value = eventConfig.title;
-                document.getElementById('cfg-datetime').value = eventConfig.datetime;
-                document.getElementById('cfg-organiser').value = eventConfig.organiser;
-                document.getElementById('cfg-venue').value = eventConfig.venue;
-                document.getElementById('cfg-desc').value = eventConfig.desc;
-                if (eventConfig.flyerUrl) {
-                    document.getElementById('flyer-img-preview').src = eventConfig.flyerUrl;
-                }
-            }
-        }
-
-        // Digital Ticket Generator
-        function generateTicket(e) {
-            e.preventDefault();
-            const name = document.getElementById('guest-name').value;
-            const category = document.getElementById('ticket-cat').value;
-            const price = parseFloat(document.getElementById('ticket-price').value) || 0;
-            const seat = document.getElementById('ticket-seat').value || 'General Access';
-            
-            const ticketId = 'TD-' + Math.floor(100000 + Math.random() * 900000);
-            const token = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
-
-            currentTicket = {
-                id: ticketId,
-                name: name,
-                category: category,
-                price: price,
-                seat: seat,
-                token: token,
-                used: false,
-                type: 'Digital PDF',
-                issuedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-
-            ticketsDatabase.push(currentTicket);
-            saveTicketsToStorage();
-
-            // Render Preview UI
-            document.getElementById('ticket-stub-empty').classList.add('hidden');
-            document.getElementById('ticket-preview-box').classList.remove('hidden');
-
-            document.getElementById('stub-flyer-img').src = eventConfig.flyerUrl;
-            document.getElementById('stub-category').innerText = category;
-            document.getElementById('stub-id').innerText = ticketId;
-            document.getElementById('stub-event-title').innerText = eventConfig.title;
-            document.getElementById('stub-event-venue').innerText = eventConfig.venue;
-            document.getElementById('stub-guest-name').innerText = name;
-            document.getElementById('stub-datetime').innerText = eventConfig.datetime;
-            document.getElementById('stub-seat').innerText = seat;
-            document.getElementById('stub-token-hash').innerText = token.substring(0, 12) + '...';
-
-            // Generate Barcode & QR Code
-            JsBarcode("#stub-barcode", ticketId, { format: "CODE128", width: 1.5, height: 35, displayValue: false });
-            
-            const qrContainer = document.getElementById('stub-qrcode');
-            qrContainer.innerHTML = '';
-            new QRCode(qrContainer, { text: ticketId, width: 90, height: 90 });
-
-            updateStats();
-        }
-
-        // PDF Generation
-        function downloadPDF() {
-            if (!currentTicket) return;
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a5');
-
-            doc.setFillColor(7, 9, 14);
-            doc.rect(0, 0, 148, 210, 'F');
-
-            doc.setTextColor(249, 115, 22);
-            doc.setFontSize(22);
-            doc.setFont('helvetica', 'bold');
-            doc.text("TicketsDust PRO Pass", 15, 20);
-
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(14);
-            doc.text(eventConfig.title, 15, 32);
-
-            doc.setTextColor(148, 163, 184);
-            doc.setFontSize(10);
-            doc.text(`Venue: ${eventConfig.venue}`, 15, 40);
-            doc.text(`Date: ${eventConfig.datetime}`, 15, 46);
-            doc.text(`Organiser: ${eventConfig.organiser}`, 15, 52);
-
-            doc.setDrawColor(51, 65, 85);
-            doc.line(15, 58, 133, 58);
-
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(12);
-            doc.text(`Holder: ${currentTicket.name}`, 15, 68);
-            doc.text(`Tier: ${currentTicket.category}`, 15, 76);
-            doc.text(`Seating: ${currentTicket.seat}`, 15, 84);
-            doc.text(`Price: R ${currentTicket.price}`, 15, 92);
-            doc.text(`Serial ID: ${currentTicket.id}`, 15, 100);
-
-            doc.setFillColor(255, 255, 255);
-            doc.rect(15, 115, 118, 70, 'F');
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(10);
-            doc.text("Scan barcode or QR code at entry gate for validation.", 20, 125);
-
-            doc.save(`${currentTicket.id}_Pass.pdf`);
-        }
-
-        // Physical Ticket Banner Generator
-        function generatePhysicalBannerTicket(e) {
-            e.preventDefault();
-            const holder = document.getElementById('phys-name').value;
-            const cat = document.getElementById('phys-cat').value;
-            const price = parseFloat(document.getElementById('phys-price').value) || 0;
-            const prefix = document.getElementById('phys-prefix').value || 'PHYS';
-
-            const serial = `${prefix}-${Math.floor(100000 + Math.random() * 900000)}`;
-
-            const physTicket = {
-                id: serial,
-                name: holder,
-                category: cat,
-                price: price,
-                seat: 'Physical Stub',
-                token: 'STUB-' + Math.random().toString(36).substring(2, 8),
-                used: false,
-                type: 'Physical Banner',
-                issuedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-
-            ticketsDatabase.push(physTicket);
-            saveTicketsToStorage();
-
-            // Render on Stub
-            renderPhysicalPreview(physTicket);
-            updateStats();
-        }
-
-        function renderPhysicalPreview(ticketData = null) {
-            const data = ticketData || {
-                id: 'PHYS-773910',
-                name: document.getElementById('phys-name').value,
-                category: document.getElementById('phys-cat').value,
-                price: parseFloat(document.getElementById('phys-price').value) || 150
-            };
-
-            document.getElementById('phys-banner-img').src = eventConfig.flyerUrl;
-            document.getElementById('phys-card-title').innerText = eventConfig.title;
-            document.getElementById('phys-card-venue').innerText = eventConfig.venue;
-            document.getElementById('phys-card-datetime').innerText = eventConfig.datetime;
-            document.getElementById('phys-card-price').innerText = `R ${data.price}`;
-            document.getElementById('phys-card-cat').innerText = data.category;
-            document.getElementById('phys-card-holder').innerText = data.name;
-            document.getElementById('phys-card-id').innerText = data.id;
-            document.getElementById('phys-stub-id').innerText = data.id;
-            document.getElementById('phys-stub-cat').innerText = data.category;
-
-            JsBarcode("#phys-card-barcode", data.id, { format: "CODE128", width: 1.2, height: 28, displayValue: false });
-
-            const qrContainer = document.getElementById('phys-card-qrcode');
-            qrContainer.innerHTML = '';
-            new QRCode(qrContainer, { text: data.id, width: 55, height: 55 });
-        }
-
-        // Camera Scanner Engine
-        function startScanner() {
-            document.getElementById('scan-mode-badge').innerText = "Camera Active";
-            document.getElementById('scan-mode-badge').className = "px-3 py-1 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase rounded-full";
-
-            html5QrScanner = new Html5Qrcode("reader");
-            html5QrScanner.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 220, height: 220 } },
-                (decodedText) => {
-                    verifyTicketCode(decodedText);
-                },
-                (errorMessage) => {
-                    // scanning...
-                }
-            ).catch(err => {
-                alert("Camera access denied or unavailable.");
-            });
-        }
-
-        function stopScanner() {
-            if (html5QrScanner) {
-                html5QrScanner.stop().then(() => {
-                    document.getElementById('scan-mode-badge').innerText = "Camera Standby";
-                    document.getElementById('scan-mode-badge').className = "px-3 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold uppercase rounded-full";
-                }).catch(err => console.error(err));
-            }
-        }
-
-        function verifyManualCode() {
-            const input = document.getElementById('manual-code-input').value.trim();
-            if (input) {
-                verifyTicketCode(input);
-            }
-        }
-
-        function verifyTicketCode(code) {
-            const resultBox = document.getElementById('scan-result');
-            const icon = document.getElementById('result-status-icon');
-            const title = document.getElementById('result-status-title');
-            const desc = document.getElementById('result-status-desc');
-            const meta = document.getElementById('result-meta');
-
-            resultBox.classList.remove('hidden');
-
-            const ticket = ticketsDatabase.find(t => t.id === code);
-
-            if (!ticket) {
-                resultBox.className = "p-6 rounded-3xl text-center space-y-3 border-2 border-rose-500/50 bg-rose-950/40 text-rose-200 shadow-2xl";
-                icon.innerText = "❌";
-                title.innerText = "INVALID TICKET";
-                desc.innerText = `Serial ${code} was not found in the official ledger database.`;
-                meta.innerHTML = `<div><strong>Status:</strong> Unrecognized</div><div><strong>Code:</strong> ${code}</div>`;
-                return;
-            }
-
-            if (ticket.used) {
-                resultBox.className = "p-6 rounded-3xl text-center space-y-3 border-2 border-amber-500/50 bg-amber-950/40 text-amber-200 shadow-2xl";
-                icon.innerText = "⚠️";
-                title.innerText = "ALREADY USED";
-                desc.innerText = `Ticket ${ticket.id} was previously checked in! Do not grant entry twice.`;
-                meta.innerHTML = `
-                    <div><strong>Holder:</strong> ${ticket.name}</div>
-                    <div><strong>Category:</strong> ${ticket.category}</div>
-                    <div><strong>Type:</strong> ${ticket.type}</div>
-                    <div><strong>Status:</strong> Checked-In</div>
-                `;
-                return;
-            }
-
-            // Valid Entrance
-            ticket.used = true;
-            saveTicketsToStorage();
-            updateStats();
-
-            resultBox.className = "p-6 rounded-3xl text-center space-y-3 border-2 border-emerald-500/50 bg-emerald-950/40 text-emerald-200 shadow-2xl";
-            icon.innerText = "✅";
-            title.innerText = "ENTRY APPROVED";
-            desc.innerText = `Welcome, ${ticket.name}! Ticket verified and successfully marked as checked-in.`;
-            meta.innerHTML = `
-                <div><strong>Holder:</strong> ${ticket.name}</div>
-                <div><strong>Category:</strong> ${ticket.category}</div>
-                <div><strong>Serial:</strong> ${ticket.id}</div>
-                <div><strong>Type:</strong> ${ticket.type}</div>
             `;
+
+            // Render QR Code after DOM element exists
+            setTimeout(() => {
+                new QRCode(document.getElementById(qrContainerId), {
+                    text: JSON.stringify({
+                        ticketId: data.code,
+                        event: data.eventName,
+                        holder: data.holderName,
+                        tier: data.tier
+                    }),
+                    width: 110,
+                    height: 110,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+            }, 50);
+
+            return card;
         }
 
-        // Database & Stats Storage
-        function saveTicketsToStorage() {
-            localStorage.setItem('ticketsdust_db', JSON.stringify(ticketsDatabase));
+        // Clear Bulk Grid
+        function clearBulk() {
+            document.getElementById('bulk-tickets-output').innerHTML = "";
+            document.getElementById('bulk-controls').style.display = 'none';
+            currentBatch = [];
         }
 
-        function loadSavedTickets() {
-            const saved = localStorage.getItem('ticketsdust_db');
-            if (saved) {
-                ticketsDatabase = JSON.parse(saved);
-            }
-        }
+        // Export Batch to CSV
+        function exportCSV() {
+            if (currentBatch.length === 0) return;
 
-        function updateStats() {
-            const total = ticketsDatabase.length;
-            const used = ticketsDatabase.filter(t => t.used).length;
-            const pending = total - used;
-            const revenue = ticketsDatabase.reduce((sum, t) => sum + (t.price || 0), 0);
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Ticket Code,Event Name,Holder Name,Tier,Price,Date,Venue\n";
 
-            document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-used').innerText = used;
-            document.getElementById('stat-pending').innerText = pending;
-            document.getElementById('stat-revenue').innerText = `R ${revenue.toLocaleString()}`;
-
-            renderLedgerTable();
-        }
-
-        function renderLedgerTable() {
-            const tbody = document.getElementById('ledger-table-body');
-            tbody.innerHTML = '';
-
-            if (ticketsDatabase.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500">No tickets generated yet.</td></tr>`;
-                return;
-            }
-
-            ticketsDatabase.slice().reverse().forEach(t => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-800/30 transition";
-                tr.innerHTML = `
-                    <td class="p-3 font-mono-code font-bold text-amber-400">${t.id}</td>
-                    <td class="p-3 font-bold text-white">${t.name}</td>
-                    <td class="p-3">${t.category}</td>
-                    <td class="p-3 font-mono-code">R ${t.price}</td>
-                    <td class="p-3"><span class="px-2 py-0.5 bg-slate-800 text-slate-300 rounded-full text-[10px]">${t.type}</span></td>
-                    <td class="p-3">
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${t.used ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}">
-                            ${t.used ? 'Checked-In' : 'Active'}
-                        </span>
-                    </td>
-                    <td class="p-3 text-slate-500 text-[10px]">${t.issuedAt || 'N/A'}</td>
-                `;
-                tbody.appendChild(tr);
+            currentBatch.forEach(t => {
+                csvContent += `"${t.code}","${t.eventName}","${t.holderName}","${t.tier}","${t.price || ''}","${t.date}","${t.venue}"\n`;
             });
-        }
 
-        function clearLedger() {
-            if (confirm("Are you sure you want to clear all issued ticket records?")) {
-                ticketsDatabase = [];
-                saveTicketsToStorage();
-                updateStats();
-            }
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `TicketsDust_Batch_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>
