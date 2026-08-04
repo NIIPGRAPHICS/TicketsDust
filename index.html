@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TicketsDust - Event & Bulk Ticket Portal</title>
-    <!-- QRCode.js CDN -->
+    <title>TicketsDust - Complete Event & Ticket System</title>
+    <!-- QRCode Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- HTML5 QR Code Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         :root {
             --bg-dark: #0f172a;
@@ -16,6 +18,8 @@
             --text-muted: #94a3b8;
             --border-color: #334155;
             --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
         }
 
         * {
@@ -53,19 +57,20 @@
             margin-top: 0.5rem;
         }
 
-        /* Nav Tabs */
+        /* Navigation Tabs */
         .tabs {
             display: flex;
             justify-content: center;
-            gap: 1rem;
+            gap: 0.75rem;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
 
         .tab-btn {
             background-color: var(--card-bg);
             color: var(--text-muted);
             border: 1px solid var(--border-color);
-            padding: 0.75rem 1.5rem;
+            padding: 0.75rem 1.25rem;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
@@ -86,7 +91,7 @@
             display: block;
         }
 
-        /* Form Controls */
+        /* Form & Card Styles */
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -97,7 +102,7 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 1.25rem;
         }
 
@@ -142,7 +147,7 @@
             background-color: var(--accent);
             color: white;
             border: none;
-            padding: 0.8rem 1.6rem;
+            padding: 0.8rem 1.5rem;
             border-radius: 6px;
             cursor: pointer;
             font-weight: 600;
@@ -164,13 +169,10 @@
             background-color: var(--border-color);
         }
 
-        .btn-success {
-            background-color: var(--success);
-        }
-
-        .btn-success:hover {
-            background-color: #059669;
-        }
+        .btn-success { background-color: var(--success); }
+        .btn-success:hover { background-color: #059669; }
+        .btn-danger { background-color: var(--danger); }
+        .btn-danger:hover { background-color: #dc2626; }
 
         /* Printable / Display Grid for Tickets */
         .tickets-header {
@@ -184,7 +186,7 @@
 
         .tickets-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 1.5rem;
         }
 
@@ -193,7 +195,6 @@
             border: 1px dashed var(--accent);
             border-radius: 12px;
             padding: 1.5rem;
-            position: relative;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -259,23 +260,84 @@
             margin-bottom: 0.5rem;
         }
 
-        /* Print Specific Styles */
+        /* Camera & Validator Layout */
+        .scanner-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        #reader {
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+            background: #000;
+        }
+
+        .scan-result {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            border-radius: 8px;
+            display: none;
+            text-align: center;
+        }
+
+        .scan-result.valid {
+            background-color: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--success);
+            color: #6ee7b7;
+        }
+
+        .scan-result.used {
+            background-color: rgba(245, 158, 11, 0.2);
+            border: 2px solid var(--warning);
+            color: #fcd34d;
+        }
+
+        .scan-result.invalid {
+            background-color: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--danger);
+            color: #fca5a5;
+        }
+
+        /* Database Table */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            color: var(--text-muted);
+            background-color: var(--bg-dark);
+        }
+
+        .status-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .status-active { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .status-checked { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+
+        /* Print Media Styles */
         @media print {
-            body {
-                background: white;
-                color: black;
-            }
-            .tabs, header, .card, .actions, .no-print {
-                display: none !important;
-            }
-            .tab-content {
-                display: block !important;
-            }
-            .tickets-grid {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 15px;
-            }
+            body { background: white; color: black; }
+            .tabs, header, .card, .actions, .no-print { display: none !important; }
+            .tab-content { display: block !important; }
+            .tickets-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
             .ticket-card {
                 background: white !important;
                 border: 2px solid #000 !important;
@@ -283,17 +345,9 @@
                 page-break-inside: avoid;
                 box-shadow: none !important;
             }
-            .ticket-title, .ticket-info span {
-                color: black !important;
-            }
-            .ticket-info, .ticket-id {
-                color: #333 !important;
-            }
-            .badge {
-                border: 1px solid #000;
-                background: #eee !important;
-                color: #000 !important;
-            }
+            .ticket-title, .ticket-info span { color: black !important; }
+            .ticket-info, .ticket-id { color: #333 !important; }
+            .badge { border: 1px solid #000; background: #eee !important; color: #000 !important; }
         }
     </style>
 </head>
@@ -302,17 +356,19 @@
     <div class="container">
         <header class="no-print">
             <h1>TicketsDust Portal</h1>
-            <p>Single & Bulk Ticket Generation System with Live QR Validation</p>
+            <p>Single, Bulk Generation & Live Camera Door Validation</p>
         </header>
 
         <!-- Navigation Tabs -->
         <div class="tabs no-print">
-            <button class="tab-btn" onclick="switchTab('single')">Single Ticket</button>
-            <button class="tab-btn active" onclick="switchTab('bulk')">Bulk Tickets</button>
+            <button class="tab-btn active" onclick="switchTab('single')">🎟️ Single Ticket</button>
+            <button class="tab-btn" onclick="switchTab('bulk')">📦 Bulk Tickets</button>
+            <button class="tab-btn" onclick="switchTab('scanner')">📷 Live Scanner & Validator</button>
+            <button class="tab-btn" onclick="switchTab('database')">📊 Database (<span id="db-count">0</span>)</button>
         </div>
 
-        <!-- SINGLE TICKET TAB -->
-        <div id="tab-single" class="tab-content">
+        <!-- 1. SINGLE TICKET TAB -->
+        <div id="tab-single" class="tab-content active">
             <div class="card no-print">
                 <h2>Single Ticket Generator</h2>
                 <div class="form-grid" style="margin-top: 1rem;">
@@ -333,24 +389,32 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label>Price (ZAR)</label>
+                        <input type="number" id="s-price" value="150">
+                    </div>
+                    <div class="form-group">
                         <label>Date</label>
                         <input type="date" id="s-date">
                     </div>
+                    <div class="form-group">
+                        <label>Venue</label>
+                        <input type="text" id="s-venue" value="Durban Central, KZN">
+                    </div>
                 </div>
                 <div class="actions">
-                    <button class="btn" onclick="generateSingleTicket()">Generate Ticket</button>
+                    <button class="btn" onclick="generateSingleTicket()">Generate & Register Ticket</button>
                 </div>
             </div>
 
             <div id="single-ticket-output" class="tickets-grid"></div>
         </div>
 
-        <!-- BULK TICKETS TAB -->
-        <div id="tab-bulk" class="tab-content active">
+        <!-- 2. BULK TICKETS TAB -->
+        <div id="tab-bulk" class="tab-content">
             <div class="card no-print">
                 <h2>Bulk Ticket Generator</h2>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0.5rem 0 1.5rem 0;">
-                    Generate multiple tickets with unique serial IDs and scannable QR codes simultaneously.
+                    Generate multiple scannable tickets simultaneously and register them into the door system.
                 </p>
 
                 <div class="form-grid">
@@ -372,7 +436,7 @@
                     </div>
                     <div class="form-group">
                         <label>Quantity to Generate</label>
-                        <input type="number" id="b-qty" value="12" min="1" max="200">
+                        <input type="number" id="b-qty" value="10" min="1" max="500">
                     </div>
                     <div class="form-group">
                         <label>Event Date</label>
@@ -384,7 +448,7 @@
                     </div>
 
                     <div class="form-group full-width">
-                        <label>Attendee Names (Optional - One name per line. Overrides quantity count if provided)</label>
+                        <label>Attendee Names (Optional - One name per line. Overrides quantity count)</label>
                         <textarea id="b-names" rows="4" placeholder="Sipho Ndlovu&#10;Ayanda Khumalo&#10;Thabo Mokoena"></textarea>
                     </div>
                 </div>
@@ -394,118 +458,211 @@
                 </div>
             </div>
 
-            <!-- Bulk Output Controls -->
             <div id="bulk-controls" class="tickets-header no-print" style="display: none;">
                 <div>
                     <h3 id="batch-count-title">Generated Tickets</h3>
-                    <p style="color: var(--text-muted); font-size: 0.85rem;">Ready for download, export, or print layout.</p>
+                    <p style="color: var(--text-muted); font-size: 0.85rem;">Ready for download, export, or printing.</p>
                 </div>
                 <div class="actions" style="margin-top: 0;">
                     <button class="btn btn-success" onclick="exportCSV()">Export Batch as CSV</button>
                     <button class="btn btn-secondary" onclick="window.print()">Print Batch Layout</button>
-                    <button class="btn btn-secondary" onclick="clearBulk()">Clear</button>
+                    <button class="btn btn-secondary" onclick="clearBulk()">Clear Display</button>
                 </div>
             </div>
 
-            <!-- Bulk Tickets Render Grid -->
             <div id="bulk-tickets-output" class="tickets-grid"></div>
         </div>
+
+        <!-- 3. SCANNER & VALIDATOR TAB -->
+        <div id="tab-scanner" class="tab-content">
+            <div class="scanner-container">
+                <div class="card">
+                    <h2>Live Camera Door Scanner</h2>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+                        Scan QR codes directly using your phone or web camera to validate entry.
+                    </p>
+
+                    <div id="reader"></div>
+
+                    <div class="actions" style="justify-content: center;">
+                        <button id="start-scan-btn" class="btn" onclick="startCamera()">Start Camera Scanner</button>
+                        <button id="stop-scan-btn" class="btn btn-secondary" onclick="stopCamera()" style="display: none;">Stop Camera</button>
+                    </div>
+
+                    <div style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                        <label>Or Enter Ticket Code Manually:</label>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                            <input type="text" id="manual-code" placeholder="e.g. TD-8921-591204" style="flex: 1;">
+                            <button class="btn" onclick="validateManualCode()">Verify</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Result Card -->
+                <div id="scan-result" class="scan-result">
+                    <h3 id="result-title">Valid Ticket</h3>
+                    <p id="result-details" style="margin-top: 0.5rem;"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. DATABASE & CHECK-IN TRACKER TAB -->
+        <div id="tab-database" class="tab-content">
+            <div class="card">
+                <div class="tickets-header">
+                    <div>
+                        <h2>Ticket Database & Check-In Log</h2>
+                        <p style="color: var(--text-muted); font-size: 0.85rem;">Registered tickets stored in local storage.</p>
+                    </div>
+                    <div class="actions" style="margin: 0;">
+                        <button class="btn btn-danger" onclick="clearDatabase()">Clear All Records</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ticket Code</th>
+                                <th>Event</th>
+                                <th>Holder</th>
+                                <th>Tier</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="db-table-body">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
-        // Global storage for current bulk batch
+        // Database handling using LocalStorage
+        const DB_KEY = "ticketsdust_database_v2";
+        let html5QrcodeScanner = null;
         let currentBatch = [];
 
-        // Set default date to today
+        // Set default date inputs to today
         document.getElementById('s-date').valueAsDate = new Date();
         document.getElementById('b-date').valueAsDate = new Date();
 
-        // Switch Tabs
-        function switchTab(tab) {
+        function getDB() {
+            const data = localStorage.getItem(DB_KEY);
+            return data ? JSON.parse(data) : {};
+        }
+
+        function saveDB(db) {
+            localStorage.setItem(DB_KEY, JSON.stringify(db));
+            updateDBCount();
+        }
+
+        function updateDBCount() {
+            const db = getDB();
+            document.getElementById('db-count').innerText = Object.keys(db).length;
+        }
+
+        // Navigation Tabs
+        function switchTab(tabId) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-            if (tab === 'single') {
-                document.querySelectorAll('.tab-btn')[0].classList.add('active');
-                document.getElementById('tab-single').classList.add('active');
-            } else {
-                document.querySelectorAll('.tab-btn')[1].classList.add('active');
-                document.getElementById('tab-bulk').classList.add('active');
-            }
+            const tabIndex = { single: 0, bulk: 1, scanner: 2, database: 3 }[tabId];
+            document.querySelectorAll('.tab-btn')[tabIndex].classList.add('active');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            if (tabId === 'database') renderDatabaseTable();
+            if (tabId !== 'scanner') stopCamera();
         }
 
-        // Generate Unique Ticket Code
+        // Unique Code Generator
         function generateTicketCode(prefix = "TD") {
             const random = Math.floor(100000 + Math.random() * 900000);
             return `${prefix}-${Date.now().toString().slice(-4)}-${random}`;
         }
 
-        // Single Ticket Generator
+        // 1. Single Ticket Generator
         function generateSingleTicket() {
             const container = document.getElementById('single-ticket-output');
             container.innerHTML = "";
 
-            const eventName = document.getElementById('s-event').value || "Event";
-            const holderName = document.getElementById('s-name').value || "Guest Holder";
-            const tier = document.getElementById('s-tier').value;
-            const date = document.getElementById('s-date').value;
-            const code = generateTicketCode();
-
-            const ticketElement = createTicketCard({
-                eventName,
-                holderName,
-                tier,
-                date,
+            const code = generateTicketCode("TD");
+            const ticketData = {
                 code,
-                venue: "Main Venue"
-            });
+                eventName: document.getElementById('s-event').value || "Selective Saturdays",
+                holderName: document.getElementById('s-name').value || "Guest Holder",
+                tier: document.getElementById('s-tier').value,
+                price: `R${document.getElementById('s-price').value || '0'}`,
+                date: document.getElementById('s-date').value,
+                venue: document.getElementById('s-venue').value || "Main Venue",
+                status: "ACTIVE",
+                createdAt: new Date().toISOString()
+            };
 
-            container.appendChild(ticketElement);
+            // Save to DB
+            const db = getDB();
+            db[code] = ticketData;
+            saveDB(db);
+
+            // Render Card
+            const card = createTicketCard(ticketData);
+            container.appendChild(card);
         }
 
-        // Bulk Ticket Generator
+        // 2. Bulk Ticket Generator
         function generateBulkTickets() {
             const container = document.getElementById('bulk-tickets-output');
             container.innerHTML = "";
             currentBatch = [];
 
-            const eventName = document.getElementById('b-event').value || "Event";
+            const eventName = document.getElementById('b-event').value || "Selective Saturdays";
             const tier = document.getElementById('b-tier').value;
             const price = document.getElementById('b-price').value;
             const date = document.getElementById('b-date').value;
-            const venue = document.getElementById('b-venue').value || "Main Venue";
+            const venue = document.getElementById('b-venue').value || "Durban Central, KZN";
             
             const rawNames = document.getElementById('b-names').value.trim();
             let namesList = rawNames ? rawNames.split('\n').map(n => n.trim()).filter(n => n.length > 0) : [];
 
             let qty = namesList.length > 0 ? namesList.length : parseInt(document.getElementById('b-qty').value) || 1;
 
+            const db = getDB();
+
             for (let i = 0; i < qty; i++) {
                 const holderName = namesList[i] ? namesList[i] : `General Guest #${i + 1}`;
                 const code = generateTicketCode("BULK");
 
                 const ticketData = {
+                    code,
                     eventName,
                     holderName,
                     tier,
                     price: `R${price}`,
                     date,
                     venue,
-                    code
+                    status: "ACTIVE",
+                    createdAt: new Date().toISOString()
                 };
 
+                db[code] = ticketData;
                 currentBatch.push(ticketData);
 
                 const card = createTicketCard(ticketData);
                 container.appendChild(card);
             }
 
-            // Show bulk controls header
+            saveDB(db);
+
             document.getElementById('bulk-controls').style.display = 'flex';
             document.getElementById('batch-count-title').innerText = `Generated (${currentBatch.length}) Tickets`;
         }
 
-        // Build Ticket HTML Card & QR Code
+        // Create Ticket DOM Card
         function createTicketCard(data) {
             const card = document.createElement('div');
             card.className = 'ticket-card';
@@ -520,8 +677,8 @@
                     <div class="ticket-info">
                         Holder: <span>${data.holderName}</span><br>
                         Date: <span>${data.date}</span><br>
-                        Venue: <span>${data.venue}</span>
-                        ${data.price ? `<br>Price: <span>${data.price}</span>` : ''}
+                        Venue: <span>${data.venue}</span><br>
+                        Price: <span>${data.price}</span>
                     </div>
                 </div>
                 <div>
@@ -532,15 +689,9 @@
                 </div>
             `;
 
-            // Render QR Code after DOM element exists
             setTimeout(() => {
                 new QRCode(document.getElementById(qrContainerId), {
-                    text: JSON.stringify({
-                        ticketId: data.code,
-                        event: data.eventName,
-                        holder: data.holderName,
-                        tier: data.tier
-                    }),
+                    text: data.code,
                     width: 110,
                     height: 110,
                     colorDark : "#000000",
@@ -552,22 +703,157 @@
             return card;
         }
 
-        // Clear Bulk Grid
+        // 3. Scanner & Verification Logic
+        function startCamera() {
+            document.getElementById('start-scan-btn').style.display = 'none';
+            document.getElementById('stop-scan-btn').style.display = 'inline-block';
+
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            html5QrcodeScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                onScanSuccess,
+                onScanFailure
+            ).catch(err => {
+                alert("Camera access failed or unavailable: " + err);
+                stopCamera();
+            });
+        }
+
+        function stopCamera() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    html5QrcodeScanner.clear();
+                    html5QrcodeScanner = null;
+                }).catch(err => console.error(err));
+            }
+            document.getElementById('start-scan-btn').style.display = 'inline-block';
+            document.getElementById('stop-scan-btn').style.display = 'none';
+        }
+
+        function onScanSuccess(decodedText) {
+            processValidation(decodedText.trim());
+        }
+
+        function onScanFailure(error) {
+            // Quiet failure for frame search
+        }
+
+        function validateManualCode() {
+            const input = document.getElementById('manual-code').value.trim();
+            if (input) processValidation(input);
+        }
+
+        function processValidation(code) {
+            const db = getDB();
+            const resultBox = document.getElementById('scan-result');
+            const titleEl = document.getElementById('result-title');
+            const detailsEl = document.getElementById('result-details');
+
+            resultBox.className = "scan-result";
+            resultBox.style.display = "block";
+
+            if (!db[code]) {
+                resultBox.classList.add("invalid");
+                titleEl.innerText = "❌ INVALID TICKET";
+                detailsEl.innerHTML = `Ticket code <strong>${code}</strong> was not found in the database.`;
+                return;
+            }
+
+            const ticket = db[code];
+
+            if (ticket.status === "CHECKED_IN") {
+                resultBox.classList.add("used");
+                titleEl.innerText = "⚠️ ALREADY USED";
+                detailsEl.innerHTML = `
+                    Holder: <strong>${ticket.holderName}</strong><br>
+                    Tier: <strong>${ticket.tier}</strong><br>
+                    Checked in at: <strong>${ticket.checkedInAt || 'Earlier'}</strong>
+                `;
+            } else {
+                // Valid entry -> Mark checked-in
+                ticket.status = "CHECKED_IN";
+                ticket.checkedInAt = new Date().toLocaleTimeString();
+                db[code] = ticket;
+                saveDB(db);
+
+                resultBox.classList.add("valid");
+                titleEl.innerText = "✅ VALID ENTRY";
+                detailsEl.innerHTML = `
+                    Event: <strong>${ticket.eventName}</strong><br>
+                    Holder: <strong>${ticket.holderName}</strong><br>
+                    Tier: <strong>${ticket.tier}</strong> | Price: <strong>${ticket.price}</strong>
+                `;
+            }
+        }
+
+        // 4. Database View
+        function renderDatabaseTable() {
+            const db = getDB();
+            const tbody = document.getElementById('db-table-body');
+            tbody.innerHTML = "";
+
+            const keys = Object.keys(db);
+            if (keys.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-muted);">No tickets generated yet.</td></tr>`;
+                return;
+            }
+
+            keys.forEach(code => {
+                const t = db[code];
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><code>${t.code}</code></td>
+                    <td>${t.eventName}</td>
+                    <td>${t.holderName}</td>
+                    <td>${t.tier}</td>
+                    <td>${t.price}</td>
+                    <td>
+                        <span class="status-badge ${t.status === 'ACTIVE' ? 'status-active' : 'status-checked'}">
+                            ${t.status}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleStatus('${t.code}')">
+                            ${t.status === 'ACTIVE' ? 'Check In' : 'Reset'}
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleStatus(code) {
+            const db = getDB();
+            if (db[code]) {
+                db[code].status = db[code].status === "ACTIVE" ? "CHECKED_IN" : "ACTIVE";
+                saveDB(db);
+                renderDatabaseTable();
+            }
+        }
+
+        function clearDatabase() {
+            if (confirm("Are you sure you want to delete all stored tickets?")) {
+                localStorage.removeItem(DB_KEY);
+                updateDBCount();
+                renderDatabaseTable();
+            }
+        }
+
         function clearBulk() {
             document.getElementById('bulk-tickets-output').innerHTML = "";
             document.getElementById('bulk-controls').style.display = 'none';
             currentBatch = [];
         }
 
-        // Export Batch to CSV
         function exportCSV() {
             if (currentBatch.length === 0) return;
 
             let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Ticket Code,Event Name,Holder Name,Tier,Price,Date,Venue\n";
+            csvContent += "Ticket Code,Event Name,Holder Name,Tier,Price,Date,Venue,Status\n";
 
             currentBatch.forEach(t => {
-                csvContent += `"${t.code}","${t.eventName}","${t.holderName}","${t.tier}","${t.price || ''}","${t.date}","${t.venue}"\n`;
+                csvContent += `"${t.code}","${t.eventName}","${t.holderName}","${t.tier}","${t.price}","${t.date}","${t.venue}","${t.status}"\n`;
             });
 
             const encodedUri = encodeURI(csvContent);
@@ -578,6 +864,9 @@
             link.click();
             document.body.removeChild(link);
         }
+
+        // Initialize count on load
+        updateDBCount();
     </script>
 </body>
 </html>
