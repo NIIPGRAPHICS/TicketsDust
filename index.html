@@ -8,6 +8,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <!-- HTML5 QR Code Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- HTML2PDF Library for Direct PDF Downloads -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --bg-dark: #090d16;
@@ -139,7 +141,7 @@
 
         .actions {
             display: flex;
-            gap: 1rem;
+            gap: 0.75rem;
             margin-top: 1.5rem;
             flex-wrap: wrap;
         }
@@ -148,11 +150,14 @@
             background-color: var(--accent);
             color: white;
             border: none;
-            padding: 0.8rem 1.5rem;
+            padding: 0.75rem 1.25rem;
             border-radius: 6px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
             transition: background 0.2s;
         }
 
@@ -170,7 +175,19 @@
         .tickets-container {
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
+            gap: 2rem;
+        }
+
+        .ticket-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .ticket-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
         }
 
         .banner-ticket {
@@ -367,7 +384,7 @@
                 margin: 0;
             }
 
-            .tabs, header, .card, .actions, .no-print {
+            .tabs, header, .card, .actions, .no-print, .ticket-actions {
                 display: none !important;
             }
 
@@ -379,16 +396,20 @@
                 display: block;
             }
 
+            .ticket-wrapper {
+                margin-bottom: 8mm;
+                page-break-inside: avoid;
+            }
+
             .banner-ticket {
                 width: 200mm;
                 height: 88mm;
-                margin: 0 auto 8mm auto;
+                margin: 0 auto;
                 background: white !important;
                 border: 2px solid #000 !important;
                 color: black !important;
                 grid-template-columns: 65mm 1fr 50mm !important;
                 box-shadow: none !important;
-                page-break-inside: avoid;
             }
 
             .banner-ticket::before, .banner-ticket::after {
@@ -484,7 +505,7 @@
                     </div>
                 </div>
                 <div class="actions">
-                    <button class="btn" onclick="generateSingleTicket()">Generate & Register Banner Ticket</button>
+                    <button class="btn" onclick="generateSingleTicket()">Generate Banner Ticket</button>
                 </div>
             </div>
 
@@ -546,15 +567,19 @@
                 </div>
             </div>
 
-            <div id="bulk-controls" class="tickets-header no-print" style="display: none; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <div>
-                    <h3 id="batch-count-title">Generated Tickets</h3>
-                    <p style="color: var(--text-muted); font-size: 0.85rem;">Formatted in 1/3 A4 size layout.</p>
-                </div>
-                <div class="actions" style="margin-top: 0;">
-                    <button class="btn btn-success" onclick="exportCSV()">Export CSV</button>
-                    <button class="btn btn-secondary" onclick="window.print()">Print A4 Sheets (3 per page)</button>
-                    <button class="btn btn-secondary" onclick="clearBulk()">Clear</button>
+            <!-- Bulk Control Actions Bar -->
+            <div id="bulk-controls" class="card no-print" style="display: none; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h3 id="batch-count-title">Generated Tickets</h3>
+                        <p style="color: var(--text-muted); font-size: 0.85rem;">Formatted for 1/3 A4 size standard print sheet.</p>
+                    </div>
+                    <div class="actions" style="margin-top: 0;">
+                        <button class="btn btn-success" onclick="printAllTickets()">🖨️ Print Out All (3/Page)</button>
+                        <button class="btn" onclick="downloadAllPDF()">📥 Download All PDF</button>
+                        <button class="btn btn-secondary" onclick="exportCSV()">📊 Export CSV</button>
+                        <button class="btn btn-danger" onclick="clearBulk()">Clear</button>
+                    </div>
                 </div>
             </div>
 
@@ -628,7 +653,7 @@
     </div>
 
     <script>
-        const DB_KEY = "ticketsdust_banner_db_v3";
+        const DB_KEY = "ticketsdust_banner_db_v4";
         let html5QrcodeScanner = null;
         let currentBatch = [];
 
@@ -701,8 +726,8 @@
             db[code] = ticketData;
             saveDB(db);
 
-            const card = createBannerTicketCard(ticketData);
-            container.appendChild(card);
+            const wrapper = createBannerTicketCard(ticketData);
+            container.appendChild(wrapper);
         }
 
         // 2. Bulk Banner Generator
@@ -745,20 +770,21 @@
                 db[code] = ticketData;
                 currentBatch.push(ticketData);
 
-                const card = createBannerTicketCard(ticketData);
-                container.appendChild(card);
+                const wrapper = createBannerTicketCard(ticketData);
+                container.appendChild(wrapper);
             }
 
             saveDB(db);
 
-            document.getElementById('bulk-controls').style.display = 'flex';
-            document.getElementById('batch-count-title').innerText = `Generated (${currentBatch.length}) Banner Tickets`;
+            document.getElementById('bulk-controls').style.display = 'block';
+            document.getElementById('batch-count-title').innerText = `Generated Batch (${currentBatch.length}) Banners`;
         }
 
         // Build 1/3 A4 Webtickets Style Banner Card DOM
         function createBannerTicketCard(data) {
-            const card = document.createElement('div');
-            card.className = 'banner-ticket';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'ticket-wrapper';
+            wrapper.id = `wrapper-${data.code}`;
 
             const qrContainerId = `qr-${data.code}`;
 
@@ -766,49 +792,55 @@
                 ? `<img src="${data.flyerImg}" class="ticket-flyer-img" alt="Event Flyer">`
                 : `<div class="flyer-placeholder">${data.eventName}<br><br>OFFICIAL EVENT FLYER</div>`;
 
-            card.innerHTML = `
-                <div class="ticket-flyer-col">
-                    ${flyerHTML}
+            wrapper.innerHTML = `
+                <div class="ticket-actions no-print">
+                    <button class="btn btn-secondary" onclick="printSingleTicket('${data.code}')">🖨️ Print Ticket</button>
+                    <button class="btn" onclick="downloadSinglePDF('${data.code}')">📥 Download PDF</button>
                 </div>
-
-                <div class="ticket-main-col">
-                    <div>
-                        <div class="brand-tag">TicketsDust Official Pass</div>
-                        <div class="banner-title">${data.eventName}</div>
+                <div class="banner-ticket" id="ticket-${data.code}">
+                    <div class="ticket-flyer-col">
+                        ${flyerHTML}
                     </div>
 
-                    <div class="banner-meta-grid">
-                        <div class="meta-item">
-                            <span>Date & Time</span>
-                            <strong>${data.date}</strong>
+                    <div class="ticket-main-col">
+                        <div>
+                            <div class="brand-tag">TicketsDust Official Pass</div>
+                            <div class="banner-title">${data.eventName}</div>
                         </div>
-                        <div class="meta-item">
-                            <span>Venue</span>
-                            <strong>${data.venue}</strong>
+
+                        <div class="banner-meta-grid">
+                            <div class="meta-item">
+                                <span>Date & Time</span>
+                                <strong>${data.date}</strong>
+                            </div>
+                            <div class="meta-item">
+                                <span>Venue</span>
+                                <strong>${data.venue}</strong>
+                            </div>
+                            <div class="meta-item">
+                                <span>Ticket Tier</span>
+                                <strong>${data.tier}</strong>
+                            </div>
+                            <div class="meta-item">
+                                <span>Price</span>
+                                <strong>${data.price}</strong>
+                            </div>
                         </div>
-                        <div class="meta-item">
-                            <span>Ticket Tier</span>
-                            <strong>${data.tier}</strong>
-                        </div>
-                        <div class="meta-item">
-                            <span>Price</span>
-                            <strong>${data.price}</strong>
+
+                        <div class="holder-strip">
+                            <span>PASS HOLDER:</span>
+                            <strong>${data.holderName}</strong>
                         </div>
                     </div>
 
-                    <div class="holder-strip">
-                        <span>PASS HOLDER:</span>
-                        <strong>${data.holderName}</strong>
+                    <div class="ticket-stub-col">
+                        <div class="stub-title">ENTRY STUB</div>
+                        <div class="stub-qr-box">
+                            <div id="${qrContainerId}"></div>
+                        </div>
+                        <div class="stub-code">${data.code}</div>
+                        <div class="stub-tier">${data.tier}</div>
                     </div>
-                </div>
-
-                <div class="ticket-stub-col">
-                    <div class="stub-title">ENTRY STUB</div>
-                    <div class="stub-qr-box">
-                        <div id="${qrContainerId}"></div>
-                    </div>
-                    <div class="stub-code">${data.code}</div>
-                    <div class="stub-tier">${data.tier}</div>
                 </div>
             `;
 
@@ -823,7 +855,42 @@
                 });
             }, 50);
 
-            return card;
+            return wrapper;
+        }
+
+        // PRINT & DOWNLOAD FUNCTIONS
+        function printSingleTicket(code) {
+            window.print();
+        }
+
+        function printAllTickets() {
+            window.print();
+        }
+
+        function downloadSinglePDF(code) {
+            const element = document.getElementById(`ticket-${code}`);
+            const opt = {
+                margin:       5,
+                filename:     `Ticket_${code}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: [210, 99], orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+        function downloadAllPDF() {
+            const element = document.getElementById('bulk-tickets-output');
+            const opt = {
+                margin:       10,
+                filename:     `TicketsDust_Batch_${Date.now()}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
         }
 
         // Camera Scanner
