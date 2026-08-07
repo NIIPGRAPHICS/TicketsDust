@@ -47,6 +47,11 @@
         header {
             text-align: center;
             margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
 
         header h1 {
@@ -373,9 +378,7 @@
             .banner-ticket::before, .banner-ticket::after { display: none; }
         }
 
-        /* =========================================================
-           PRINT CSS: EXACT 1/3 A4 BANNER LAYOUT (3 Tickets / Page)
-           ========================================================= */
+        /* PRINT CSS: EXACT 1/3 A4 BANNER LAYOUT (3 Tickets / Page) */
         @media print {
             body {
                 background: white !important;
@@ -453,8 +456,13 @@
 
     <div class="container">
         <header class="no-print">
-            <h1>TicketsDust Portal</h1>
-            <p>1/3 A4 Banner Tickets, Flyer Integration & Door Validation System</p>
+            <div style="flex:1">
+                <h1>TicketsDust Portal</h1>
+                <p>1/3 A4 Banner Tickets, Flyer Integration & Door Validation System</p>
+            </div>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+                <button class="btn btn-secondary" onclick="downloadAppSnapshot()">⬇️ Download App</button>
+            </div>
         </header>
 
         <!-- Navigation Tabs -->
@@ -506,6 +514,7 @@
                 </div>
                 <div class="actions">
                     <button class="btn" onclick="generateSingleTicket()">Generate Banner Ticket</button>
+                    <button class="btn btn-secondary" onclick="clearSingleForm()">Clear Form</button>
                 </div>
             </div>
 
@@ -564,6 +573,7 @@
 
                 <div class="actions">
                     <button class="btn" onclick="generateBulkTickets()">Generate Bulk Banners</button>
+                    <button class="btn btn-secondary" onclick="clearBulkForm()">Clear Form</button>
                 </div>
             </div>
 
@@ -578,7 +588,7 @@
                         <button class="btn btn-success" onclick="printAllTickets()">🖨️ Print Out All (3/Page)</button>
                         <button class="btn" onclick="downloadAllPDF()">📥 Download All PDF</button>
                         <button class="btn btn-secondary" onclick="exportCSV()">📊 Export CSV</button>
-                        <button class="btn btn-danger" onclick="clearBulk()">Clear</button>
+                        <button class="btn btn-danger" onclick="confirmClearBulk()">Clear</button>
                     </div>
                 </div>
             </div>
@@ -628,7 +638,9 @@
                         <p style="color: var(--text-muted); font-size: 0.85rem;">Registered tickets stored in system memory.</p>
                     </div>
                     <div class="actions" style="margin: 0;">
-                        <button class="btn btn-danger" onclick="clearDatabase()">Clear Records</button>
+                        <button class="btn" onclick="printAllDatabaseTickets()">🖨️ Print All DB</button>
+                        <button class="btn" onclick="downloadAllDatabasePDF()">📥 Download All DB PDF</button>
+                        <button class="btn btn-danger" onclick="confirmClearDatabase()">Clear Records</button>
                     </div>
                 </div>
 
@@ -654,11 +666,16 @@
     </div>
 
     <script>
+        // Keys
         const DB_KEY = "ticketsdust_banner_db_v4";
+        const SINGLE_FORM_KEY = "ticketsdust_form_single_v1";
+        const BULK_FORM_KEY = "ticketsdust_form_bulk_v1";
+
         let html5QrcodeScanner = null;
         let isScanningPaused = false;
         let currentBatch = [];
 
+        // ----- Storage helpers -----
         function getDB() {
             const data = localStorage.getItem(DB_KEY);
             return data ? JSON.parse(data) : {};
@@ -674,16 +691,107 @@
             document.getElementById('db-count').innerText = Object.keys(db).length;
         }
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        // ----- Autosave: save/restore form state -----
+        function autosaveSingleForm() {
+            const payload = {
+                event: document.getElementById('s-event').value,
+                holder: document.getElementById('s-name').value,
+                tier: document.getElementById('s-tier').value,
+                price: document.getElementById('s-price').value,
+                date: document.getElementById('s-date').value,
+                venue: document.getElementById('s-venue').value,
+                flyer: document.getElementById('s-flyer-preview').value || null
+            };
+            localStorage.setItem(SINGLE_FORM_KEY, JSON.stringify(payload));
+        }
 
-            const tabIndex = { single: 0, bulk: 1, scanner: 2, database: 3 }[tabId];
-            document.querySelectorAll('.tab-btn')[tabIndex].classList.add('active');
-            document.getElementById(`tab-${tabId}`).classList.add('active');
+        function autosaveBulkForm() {
+            const payload = {
+                event: document.getElementById('b-event').value,
+                tier: document.getElementById('b-tier').value,
+                price: document.getElementById('b-price').value,
+                qty: document.getElementById('b-qty').value,
+                date: document.getElementById('b-date').value,
+                venue: document.getElementById('b-venue').value,
+                flyer: document.getElementById('b-flyer-preview').value || null,
+                names: document.getElementById('b-names').value
+            };
+            localStorage.setItem(BULK_FORM_KEY, JSON.stringify(payload));
+        }
 
-            if (tabId === 'database') renderDatabaseTable();
-            if (tabId !== 'scanner') stopCamera();
+        function restoreFormStates() {
+            const s = localStorage.getItem(SINGLE_FORM_KEY);
+            if (s) {
+                try {
+                    const obj = JSON.parse(s);
+                    if (obj.event !== undefined) document.getElementById('s-event').value = obj.event;
+                    if (obj.holder !== undefined) document.getElementById('s-name').value = obj.holder;
+                    if (obj.tier !== undefined) document.getElementById('s-tier').value = obj.tier;
+                    if (obj.price !== undefined) document.getElementById('s-price').value = obj.price;
+                    if (obj.date !== undefined) document.getElementById('s-date').value = obj.date;
+                    if (obj.venue !== undefined) document.getElementById('s-venue').value = obj.venue;
+                    if (obj.flyer) document.getElementById('s-flyer-preview').value = obj.flyer;
+                } catch(e){}
+            }
+
+            const b = localStorage.getItem(BULK_FORM_KEY);
+            if (b) {
+                try {
+                    const obj = JSON.parse(b);
+                    if (obj.event !== undefined) document.getElementById('b-event').value = obj.event;
+                    if (obj.tier !== undefined) document.getElementById('b-tier').value = obj.tier;
+                    if (obj.price !== undefined) document.getElementById('b-price').value = obj.price;
+                    if (obj.qty !== undefined) document.getElementById('b-qty').value = obj.qty;
+                    if (obj.date !== undefined) document.getElementById('b-date').value = obj.date;
+                    if (obj.venue !== undefined) document.getElementById('b-venue').value = obj.venue;
+                    if (obj.flyer) document.getElementById('b-flyer-preview').value = obj.flyer;
+                    if (obj.names !== undefined) document.getElementById('b-names').value = obj.names;
+                } catch(e){}
+            }
+        }
+
+        function clearSingleForm() {
+            if (!confirm('Clear single ticket form?')) return;
+            document.getElementById('s-event').value = '';
+            document.getElementById('s-name').value = '';
+            document.getElementById('s-tier').selectedIndex = 0;
+            document.getElementById('s-price').value = '';
+            document.getElementById('s-date').value = '';
+            document.getElementById('s-venue').value = '';
+            document.getElementById('s-flyer-preview').value = '';
+            localStorage.removeItem(SINGLE_FORM_KEY);
+        }
+
+        function clearBulkForm() {
+            if (!confirm('Clear bulk ticket form?')) return;
+            document.getElementById('b-event').value = '';
+            document.getElementById('b-tier').selectedIndex = 0;
+            document.getElementById('b-price').value = '';
+            document.getElementById('b-qty').value = 1;
+            document.getElementById('b-date').value = '';
+            document.getElementById('b-venue').value = '';
+            document.getElementById('b-flyer-preview').value = '';
+            document.getElementById('b-names').value = '';
+            localStorage.removeItem(BULK_FORM_KEY);
+        }
+
+        // Attach autosave listeners
+        function attachAutosaveListeners() {
+            // Single
+            ['s-event','s-name','s-tier','s-price','s-date','s-venue'].forEach(id=>{
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('input', autosaveSingleForm);
+                el.addEventListener('change', autosaveSingleForm);
+            });
+            // Flyer previews are set by previewFlyer -> call autosave there
+            // Bulk
+            ['b-event','b-tier','b-price','b-qty','b-date','b-venue','b-names'].forEach(id=>{
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('input', autosaveBulkForm);
+                el.addEventListener('change', autosaveBulkForm);
+            });
         }
 
         // Image file to Base64 preview
@@ -693,17 +801,117 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     document.getElementById(targetHiddenId).value = e.target.result;
+                    // Save immediately to form autosave
+                    if (targetHiddenId === 's-flyer-preview') autosaveSingleForm();
+                    if (targetHiddenId === 'b-flyer-preview') autosaveBulkForm();
                 };
                 reader.readAsDataURL(file);
             }
         }
 
+        // ----- Ticket code generator -----
         function generateTicketCode(prefix = "TD") {
             const random = Math.floor(100000 + Math.random() * 900000);
             return `${prefix}-${Date.now().toString().slice(-4)}-${random}`.toUpperCase();
         }
 
-        // 1. Single Banner Generator
+        // ----- Create banner DOM for a ticket (used by render and by PDF/print helpers) -----
+        function createBannerTicketCard(data) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'ticket-wrapper';
+            wrapper.id = `wrapper-${data.code}`;
+
+            const qrContainerId = `qr-${data.code}`;
+
+            const flyerHTML = data.flyerImg
+                ? `<img src="${data.flyerImg}" class="ticket-flyer-img" alt="Event Flyer">`
+                : `<div class="flyer-placeholder">${escapeHtml(data.eventName)}<br><br>OFFICIAL EVENT FLYER</div>`;
+
+            wrapper.innerHTML = `
+                <div class="ticket-actions no-print">
+                    <button class="btn btn-secondary" onclick="printSingleTicket('${data.code}')">🖨️ Print Ticket</button>
+                    <button class="btn" onclick="downloadSinglePDF('${data.code}')">📥 Download PDF</button>
+                </div>
+                <div class="banner-ticket" id="ticket-${data.code}">
+                    <div class="ticket-flyer-col">
+                        ${flyerHTML}
+                    </div>
+
+                    <div class="ticket-main-col">
+                        <div>
+                            <div class="brand-tag">TicketsDust Official Pass</div>
+                            <div class="banner-title">${escapeHtml(data.eventName)}</div>
+                        </div>
+
+                        <div class="banner-meta-grid">
+                            <div class="meta-item">
+                                <span>Date & Time</span>
+                                <strong>${escapeHtml(data.date)}</strong>
+                            </div>
+                            <div class="meta-item">
+                                <span>Venue</span>
+                                <strong>${escapeHtml(data.venue)}</strong>
+                            </div>
+                            <div class="meta-item">
+                                <span>Ticket Tier</span>
+                                <strong>${escapeHtml(data.tier)}</strong>
+                            </div>
+                            <div class="meta-item">
+                                <span>Price</span>
+                                <strong>${escapeHtml(data.price)}</strong>
+                            </div>
+                        </div>
+
+                        <div class="holder-strip">
+                            <span>PASS HOLDER:</span>
+                            <strong>${escapeHtml(data.holderName)}</strong>
+                        </div>
+                    </div>
+
+                    <div class="ticket-stub-col">
+                        <div class="stub-title">ENTRY STUB</div>
+                        <div class="stub-qr-box">
+                            <div id="${qrContainerId}"></div>
+                        </div>
+                        <div class="stub-code">${escapeHtml(data.code)}</div>
+                        <div class="stub-tier">${escapeHtml(data.tier)}</div>
+                    </div>
+                </div>
+            `;
+
+            // QR code generation requires element to be in DOM for reliable rendering.
+            // If wrapper is appended to DOM, the QR will render via this timer.
+            setTimeout(() => {
+                try {
+                    const target = document.getElementById(qrContainerId);
+                    if (target && target.innerHTML.trim() === '') {
+                        new QRCode(target, {
+                            text: data.code,
+                            width: 95,
+                            height: 95,
+                            colorDark : "#000000",
+                            colorLight : "#ffffff",
+                            correctLevel : QRCode.CorrectLevel.H
+                        });
+                    }
+                } catch(e){}
+            }, 50);
+
+            return wrapper;
+        }
+
+        // Simple HTML escape
+        function escapeHtml(str) {
+            if (str === undefined || str === null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // ----- GENERATORS -----
         function generateSingleTicket() {
             const container = document.getElementById('single-ticket-output');
             container.innerHTML = "";
@@ -730,9 +938,11 @@
 
             const wrapper = createBannerTicketCard(ticketData);
             container.appendChild(wrapper);
+
+            // keep current form state but update autosave
+            autosaveSingleForm();
         }
 
-        // 2. Bulk Banner Generator
         function generateBulkTickets() {
             const container = document.getElementById('bulk-tickets-output');
             container.innerHTML = "";
@@ -780,110 +990,105 @@
 
             document.getElementById('bulk-controls').style.display = 'block';
             document.getElementById('batch-count-title').innerText = `Generated Batch (${currentBatch.length}) Banners`;
+
+            // update autosave for bulk form
+            autosaveBulkForm();
         }
 
-        // Build 1/3 A4 Webtickets Style Banner Card DOM
-        function createBannerTicketCard(data) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'ticket-wrapper';
-            wrapper.id = `wrapper-${data.code}`;
-
-            const qrContainerId = `qr-${data.code}`;
-
-            const flyerHTML = data.flyerImg 
-                ? `<img src="${data.flyerImg}" class="ticket-flyer-img" alt="Event Flyer">`
-                : `<div class="flyer-placeholder">${data.eventName}<br><br>OFFICIAL EVENT FLYER</div>`;
-
-            wrapper.innerHTML = `
-                <div class="ticket-actions no-print">
-                    <button class="btn btn-secondary" onclick="printSingleTicket('${data.code}')">🖨️ Print Ticket</button>
-                    <button class="btn" onclick="downloadSinglePDF('${data.code}')">📥 Download PDF</button>
-                </div>
-                <div class="banner-ticket" id="ticket-${data.code}">
-                    <div class="ticket-flyer-col">
-                        ${flyerHTML}
-                    </div>
-
-                    <div class="ticket-main-col">
-                        <div>
-                            <div class="brand-tag">TicketsDust Official Pass</div>
-                            <div class="banner-title">${data.eventName}</div>
-                        </div>
-
-                        <div class="banner-meta-grid">
-                            <div class="meta-item">
-                                <span>Date & Time</span>
-                                <strong>${data.date}</strong>
-                            </div>
-                            <div class="meta-item">
-                                <span>Venue</span>
-                                <strong>${data.venue}</strong>
-                            </div>
-                            <div class="meta-item">
-                                <span>Ticket Tier</span>
-                                <strong>${data.tier}</strong>
-                            </div>
-                            <div class="meta-item">
-                                <span>Price</span>
-                                <strong>${data.price}</strong>
-                            </div>
-                        </div>
-
-                        <div class="holder-strip">
-                            <span>PASS HOLDER:</span>
-                            <strong>${data.holderName}</strong>
-                        </div>
-                    </div>
-
-                    <div class="ticket-stub-col">
-                        <div class="stub-title">ENTRY STUB</div>
-                        <div class="stub-qr-box">
-                            <div id="${qrContainerId}"></div>
-                        </div>
-                        <div class="stub-code">${data.code}</div>
-                        <div class="stub-tier">${data.tier}</div>
-                    </div>
-                </div>
-            `;
-
-            setTimeout(() => {
-                new QRCode(document.getElementById(qrContainerId), {
-                    text: data.code,
-                    width: 95,
-                    height: 95,
-                    colorDark : "#000000",
-                    colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.H
-                });
-            }, 50);
-
-            return wrapper;
-        }
-
-        // PRINT & DOWNLOAD FUNCTIONS
+        // ----- PRINT & DOWNLOAD -----
+        // Print a single ticket (from DB) by creating a temporary window
         function printSingleTicket(code) {
-            window.print();
+            const db = getDB();
+            const ticket = db[code];
+            if (!ticket) {
+                alert('Ticket not found in database: ' + code);
+                return;
+            }
+
+            // create a temp wrapper and ensure QR is generated
+            const temp = createBannerTicketCard(ticket);
+            temp.style.maxWidth = '100%';
+            temp.style.margin = '0 auto';
+
+            // Build a minimal document with styles
+            const styleHTML = getPrintableStyles();
+
+            const w = window.open('', '_blank');
+            if (!w) {
+                alert('Popup blocked. Allow popups to print tickets.');
+                return;
+            }
+            w.document.write('<!doctype html><html><head><meta charset="utf-8">' + styleHTML + '</head><body>');
+            w.document.write(temp.innerHTML);
+            w.document.write('</body></html>');
+            w.document.close();
+
+            // Wait a short moment for images/QR to render, then print
+            setTimeout(() => {
+                try {
+                    w.focus();
+                    w.print();
+                } catch (e) {
+                    console.error(e);
+                }
+                // don't close window automatically to allow user to inspect/print
+            }, 400);
         }
 
+        // Download a single ticket as PDF. If ticket isn't visible on page, build a temporary DOM node.
+        function downloadSinglePDF(code) {
+            const db = getDB();
+            const ticket = db[code];
+            if (!ticket) {
+                alert('Ticket not found in database: ' + code);
+                return;
+            }
+
+            const tempDiv = document.createElement('div');
+            tempDiv.style.position = 'fixed';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.top = '0';
+            tempDiv.style.opacity = '0';
+            document.body.appendChild(tempDiv);
+
+            const card = createBannerTicketCard(ticket);
+            tempDiv.appendChild(card);
+
+            // Wait for QR to render
+            setTimeout(() => {
+                const element = tempDiv.querySelector('.banner-ticket') || card;
+                const opt = {
+                    margin:       5,
+                    filename:     `Ticket_${code}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true },
+                    jsPDF:        { unit: 'mm', format: [210, 99], orientation: 'landscape' }
+                };
+                html2pdf().set(opt).from(element).save().then(() => {
+                    setTimeout(()=> {
+                        try { tempDiv.remove(); } catch(e){}
+                    }, 200);
+                }).catch(err=>{
+                    tempDiv.remove();
+                    console.error(err);
+                    alert('PDF generation failed: ' + err);
+                });
+            }, 350);
+        }
+
+        // Print all tickets currently shown in bulk output (or entire DB using separate function)
         function printAllTickets() {
             window.print();
         }
 
-        function downloadSinglePDF(code) {
-            const element = document.getElementById(`ticket-${code}`);
-            const opt = {
-                margin:       5,
-                filename:     `Ticket_${code}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: [210, 99], orientation: 'landscape' }
-            };
-
-            html2pdf().set(opt).from(element).save();
-        }
-
+        // Download all tickets currently visible in bulk output as a single PDF
         function downloadAllPDF() {
             const element = document.getElementById('bulk-tickets-output');
+            if (!element || element.children.length === 0) {
+                alert('No bulk tickets visible to download.');
+                return;
+            }
+
             const opt = {
                 margin:       10,
                 filename:     `TicketsDust_Batch_${Date.now()}.pdf`,
@@ -895,7 +1100,7 @@
             html2pdf().set(opt).from(element).save();
         }
 
-        // Camera Scanner & Verifier
+        // ----- Camera Scanner & Verifier (existing) -----
         function startCamera() {
             document.getElementById('start-scan-btn').style.display = 'none';
             document.getElementById('stop-scan-btn').style.display = 'inline-block';
@@ -991,88 +1196,234 @@
                     Holder: <strong>${ticket.holderName}</strong><br>
                     Tier: <strong>${ticket.tier}</strong> | Price: <strong>${ticket.price}</strong>
                 `;
+                renderDatabaseTable(); // update DB view immediately
             }
         }
 
-        // Database
+        // ----- Database rendering and row actions -----
         function renderDatabaseTable() {
             const db = getDB();
             const tbody = document.getElementById('db-table-body');
-            tbody.innerHTML = "";
+            tbody.innerHTML = '';
 
-            const keys = Object.keys(db);
+            const keys = Object.keys(db).sort((a,b)=> (db[b].createdAt || '').localeCompare(db[a].createdAt || ''));
+
             if (keys.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-muted);">No tickets generated yet.</td></tr>`;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="7" style="text-align:center;color:var(--text-muted)">No tickets registered yet.</td>`;
+                tbody.appendChild(tr);
                 return;
             }
 
             keys.forEach(code => {
                 const t = db[code];
                 const tr = document.createElement('tr');
+
+                const statusBadge = t.status === 'CHECKED_IN'
+                    ? `<span class="status-badge status-checked">CHECKED IN</span>`
+                    : `<span class="status-badge status-active">ACTIVE</span>`;
+
                 tr.innerHTML = `
-                    <td><code>${t.code}</code></td>
-                    <td>${t.eventName}</td>
-                    <td>${t.holderName}</td>
-                    <td>${t.tier}</td>
-                    <td>${t.price}</td>
+                    <td style="font-family:monospace">${escapeHtml(t.code)}</td>
+                    <td>${escapeHtml(t.eventName)}</td>
+                    <td>${escapeHtml(t.holderName)}</td>
+                    <td>${escapeHtml(t.tier)}</td>
+                    <td>${escapeHtml(t.price)}</td>
+                    <td>${statusBadge}</td>
                     <td>
-                        <span class="status-badge ${t.status === 'ACTIVE' ? 'status-active' : 'status-checked'}">
-                            ${t.status}
-                        </span>
-                    </td>
-                    <td>
-                        <button class="btn btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleStatus('${t.code}')">
-                            ${t.status === 'ACTIVE' ? 'Check In' : 'Reset'}
-                        </button>
+                        <button class="btn btn-secondary" onclick="printSingleTicket('${escapeJs(code)}')">Print</button>
+                        <button class="btn" onclick="downloadSinglePDF('${escapeJs(code)}')">PDF</button>
+                        <button class="btn btn-secondary" onclick="showTicket('${escapeJs(code)}')">Show</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function toggleStatus(code) {
+        // Show ticket in Single Ticket output area
+        function showTicket(code) {
             const db = getDB();
-            if (db[code]) {
-                db[code].status = db[code].status === "ACTIVE" ? "CHECKED_IN" : "ACTIVE";
-                saveDB(db);
-                renderDatabaseTable();
-            }
+            const ticket = db[code];
+            if (!ticket) return alert('Ticket not found: ' + code);
+            const container = document.getElementById('single-ticket-output');
+            container.innerHTML = '';
+            const wrapper = createBannerTicketCard(ticket);
+            container.appendChild(wrapper);
+            switchTab('single');
+            // scroll into view
+            setTimeout(()=> wrapper.scrollIntoView({behavior:'smooth'}),100);
+        }
+
+        // Helper to safely put code in onclick attributes
+        function escapeJs(s) {
+            return (s+'').replace(/'/g,"\\'");
+        }
+
+        // ----- Clear DB and confirmations -----
+        function confirmClearDatabase() {
+            if (!confirm('Clear ALL ticket records from local database? This cannot be undone.')) return;
+            clearDatabase();
         }
 
         function clearDatabase() {
-            if (confirm("Delete all registered ticket records?")) {
-                localStorage.removeItem(DB_KEY);
-                updateDBCount();
-                renderDatabaseTable();
-            }
+            localStorage.removeItem(DB_KEY);
+            updateDBCount();
+            renderDatabaseTable();
+            alert('Database cleared.');
+        }
+
+        function confirmClearBulk() {
+            if (!confirm('Clear generated bulk tickets in the page (does not delete DB)?')) return;
+            clearBulk();
         }
 
         function clearBulk() {
-            document.getElementById('bulk-tickets-output').innerHTML = "";
-            document.getElementById('bulk-controls').style.display = 'none';
+            document.getElementById('bulk-tickets-output').innerHTML = '';
             currentBatch = [];
+            document.getElementById('bulk-controls').style.display = 'none';
+            document.getElementById('batch-count-title').innerText = 'Generated Tickets';
         }
 
+        // ----- Export CSV (simple) -----
         function exportCSV() {
-            if (currentBatch.length === 0) return;
+            const db = getDB();
+            const rows = [['Code','Event','Holder','Tier','Price','Date','Venue','Status','CreatedAt']];
+            Object.values(db).forEach(t => {
+                rows.push([t.code,t.eventName,t.holderName,t.tier,t.price,t.date,t.venue,t.status,t.createdAt]);
+            });
+            const csv = rows.map(r => r.map(c => `"${(c||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+            const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `TicketsDust_Export_${Date.now()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
 
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Code,Event,Holder,Tier,Price,Date,Venue,Status\n";
+        // ----- Download App Snapshot (HTML) -----
+        function downloadAppSnapshot() {
+            // Create a minimal snapshot: the current page HTML (styles included).
+            const html = '<!doctype html>\n' + document.documentElement.outerHTML;
+            const blob = new Blob([html], {type:'text/html'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `TicketsDust_${Date.now()}.html`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
 
-            currentBatch.forEach(t => {
-                csvContent += `"${t.code}","${t.eventName}","${t.holderName}","${t.tier}","${t.price}","${t.date}","${t.venue}","${t.status}"\n`;
+        // ----- Database: Print All / Download All DB PDF -----
+        function getPrintableStyles() {
+            // Collect <style> tags from current document head so printed window looks like original
+            const styles = Array.from(document.querySelectorAll('style')).map(s => s.outerHTML).join('\n');
+            // Also include link rel=stylesheet tags if needed
+            const links = Array.from(document.querySelectorAll('link[rel="stylesheet"], link[rel="preload"]')).map(l => l.outerHTML).join('\n');
+            return styles + '\n' + links;
+        }
+
+        function printAllDatabaseTickets() {
+            const db = getDB();
+            const keys = Object.keys(db);
+            if (keys.length === 0) return alert('No tickets in database.');
+
+            const styleHTML = getPrintableStyles();
+            const w = window.open('', '_blank');
+            if (!w) {
+                alert('Popup blocked. Allow popups to print tickets.');
+                return;
+            }
+
+            w.document.write('<!doctype html><html><head><meta charset="utf-8">' + styleHTML + '</head><body>');
+            keys.forEach(k => {
+                const t = db[k];
+                const temp = createBannerTicketCard(t);
+                w.document.write(temp.innerHTML);
+                w.document.write('<hr style="page-break-after: always;border:none;margin:0;padding:0">');
+            });
+            w.document.write('</body></html>');
+            w.document.close();
+
+            setTimeout(()=> {
+                try { w.focus(); w.print(); } catch(e){}
+            }, 500);
+        }
+
+        function downloadAllDatabasePDF() {
+            const db = getDB();
+            const keys = Object.keys(db);
+            if (keys.length === 0) return alert('No tickets in database.');
+
+            // Create temp container appended to body
+            const tempDiv = document.createElement('div');
+            tempDiv.style.position = 'fixed';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.top = '0';
+            tempDiv.style.opacity = '0';
+            document.body.appendChild(tempDiv);
+
+            keys.forEach(k => {
+                const t = db[k];
+                const card = createBannerTicketCard(t);
+                tempDiv.appendChild(card);
             });
 
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `TicketsDust_Banner_Batch_${Date.now()}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            setTimeout(()=> {
+                const opt = {
+                    margin:       10,
+                    filename:     `TicketsDust_DB_${Date.now()}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+                html2pdf().set(opt).from(tempDiv).save().then(()=>{
+                    try{ tempDiv.remove(); }catch(e){}
+                }).catch(err=>{
+                    try{ tempDiv.remove(); }catch(e){}
+                    console.error(err);
+                    alert('PDF generation failed: ' + err);
+                });
+            }, 600);
         }
 
-        updateDBCount();
+        // ----- Utility: escape for onclick attributes (used earlier) -----
+        function escapeForAttr(s) {
+            return (s+'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
+        // ----- Init and tab switching -----
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            const tabIndex = { single: 0, bulk: 1, scanner: 2, database: 3 }[tabId];
+            const btns = document.querySelectorAll('.tab-btn');
+            if (btns[tabIndex]) btns[tabIndex].classList.add('active');
+            const el = document.getElementById(`tab-${tabId}`);
+            if (el) el.classList.add('active');
+
+            if (tabId === 'database') renderDatabaseTable();
+            if (tabId !== 'scanner') stopCamera();
+        }
+
+        // ----- Page Load -----
+        document.addEventListener('DOMContentLoaded', () => {
+            restoreFormStates();
+            attachAutosaveListeners();
+            updateDBCount();
+            renderDatabaseTable();
+
+            // Attach basic handlers for file input elements to autosave when changed (they set hidden preview values)
+            const sfly = document.getElementById('s-flyer');
+            if (sfly) sfly.addEventListener('change', () => autosaveSingleForm());
+            const bfly = document.getElementById('b-flyer');
+            if (bfly) bfly.addEventListener('change', () => autosaveBulkForm());
+        });
     </script>
 </body>
 </html>
