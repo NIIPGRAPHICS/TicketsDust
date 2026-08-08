@@ -338,6 +338,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            min-width: 68px;
+            min-height: 68px;
         }
 
         .stub-code {
@@ -741,7 +743,6 @@
             return;
         }
 
-        // Direct login check
         if (email === 'bookings@youngstarproduction.com' && password === '123455') {
             authToken = 'auth-token-' + Date.now();
             currentUser = { username: 'Youngstar Production', email: email, role: 'ADMIN' };
@@ -917,7 +918,7 @@
             .replace(/'/g, '&#039;');
     }
 
-    // ===== TICKET DOM CARD CREATION =====
+    // ===== TICKET DOM CARD CREATION (FIXED QR GENERATION LOGIC) =====
     function createBannerTicketCard(data) {
         const wrapper = document.createElement('div');
         wrapper.className = 'ticket-wrapper';
@@ -982,21 +983,27 @@
             </div>
         `;
 
-        setTimeout(() => {
-            try {
+        // Render QR Code after DOM attachment
+        requestAnimationFrame(() => {
+            setTimeout(() => {
                 const target = document.getElementById(qrContainerId);
-                if (target && target.innerHTML.trim() === '') {
-                    new QRCode(target, {
-                        text: data.code,
-                        width: 60,
-                        height: 60,
-                        colorDark : "#000000",
-                        colorLight : "#ffffff",
-                        correctLevel : QRCode.CorrectLevel.H
-                    });
+                if (target) {
+                    target.innerHTML = '';
+                    try {
+                        new QRCode(target, {
+                            text: data.code,
+                            width: 60,
+                            height: 60,
+                            colorDark: "#000000",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.H
+                        });
+                    } catch (err) {
+                        console.error("QR Code Error:", err);
+                    }
                 }
-            } catch(e){}
-        }, 50);
+            }, 100);
+        });
 
         return wrapper;
     }
