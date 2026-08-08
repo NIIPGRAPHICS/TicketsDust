@@ -800,7 +800,7 @@
 
     function demoLogin() {
         authToken = 'demo-token-' + Date.now();
-        currentUser = { username: 'Organizer', email: 'demo@ticketsdust.com', role: 'ADMIN' };
+        currentUser = { username: 'Tickets', email: 'ticket@gmail.com', role: 'ADMIN' };
         localStorage.setItem(AUTH_TOKEN_KEY, authToken);
         localStorage.setItem(AUTH_USER_KEY, JSON.stringify(currentUser));
         showMainContent();
