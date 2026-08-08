@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TicketsDust - Complete Ticket Management System</title>
+    <title>TicketsDust - Ticket Management System</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -184,12 +184,15 @@
             display: flex;
             flex-direction: column;
             gap: 2rem;
+            align-items: center;
         }
 
         .ticket-wrapper {
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
+            width: 100%;
+            max-width: 280mm;
         }
 
         .ticket-actions {
@@ -198,16 +201,20 @@
             gap: 0.5rem;
         }
 
+        /* 280mm x 70mm BANNER TICKET SPECIFICATION */
         .banner-ticket {
             display: grid;
-            grid-template-columns: 220px 1fr 180px;
+            grid-template-columns: 70mm 150mm 60mm;
+            width: 280mm;
+            height: 70mm;
             background: linear-gradient(135deg, #0d1322, #1a233a);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             position: relative;
-            min-height: 190px;
+            box-sizing: border-box;
+            margin: 0 auto;
         }
 
         .ticket-flyer-col {
@@ -217,6 +224,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            height: 70mm;
         }
 
         .ticket-flyer-img {
@@ -226,65 +234,69 @@
         }
 
         .flyer-placeholder {
-            padding: 1rem;
+            padding: 0.5rem;
             text-align: center;
             color: var(--text-muted);
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
             text-transform: uppercase;
         }
 
         .ticket-main-col {
-            padding: 1.25rem 1.5rem;
+            padding: 0.6rem 1rem;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             border-right: 2px dashed #2d3b55;
             position: relative;
+            height: 70mm;
         }
 
         .brand-tag {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 800;
-            letter-spacing: 1.5px;
+            letter-spacing: 1.2px;
             color: var(--gold);
             text-transform: uppercase;
         }
 
         .banner-title {
-            font-size: 1.35rem;
+            font-size: 1.15rem;
             font-weight: 800;
             color: #ffffff;
-            margin: 0.2rem 0;
-            line-height: 1.2;
+            margin: 0.1rem 0;
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .banner-meta-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 0.75rem;
-            margin: 0.75rem 0;
+            gap: 0.3rem 0.75rem;
+            margin: 0.2rem 0;
         }
 
         .meta-item span {
             display: block;
-            font-size: 0.65rem;
+            font-size: 0.58rem;
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         .meta-item strong {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: #f1f5f9;
         }
 
         .holder-strip {
             background-color: rgba(99, 102, 241, 0.1);
             border: 1px solid rgba(99, 102, 241, 0.3);
-            border-radius: 6px;
-            padding: 0.4rem 0.75rem;
-            font-size: 0.8rem;
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -296,86 +308,84 @@
 
         .ticket-stub-col {
             background-color: rgba(15, 23, 42, 0.6);
-            padding: 1rem;
+            padding: 0.4rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
             position: relative;
+            height: 70mm;
         }
 
         .stub-title {
-            font-size: 0.65rem;
+            font-size: 0.55rem;
             font-weight: 700;
             letter-spacing: 1px;
             color: var(--text-muted);
             text-transform: uppercase;
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.2rem;
         }
 
         .stub-qr-box {
             background: white;
-            padding: 6px;
-            border-radius: 6px;
-            margin-bottom: 0.4rem;
+            padding: 4px;
+            border-radius: 4px;
+            margin-bottom: 0.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .stub-code {
             font-family: monospace;
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             font-weight: 700;
             color: var(--gold);
         }
 
         .stub-tier {
-            font-size: 0.7rem;
+            font-size: 0.6rem;
             font-weight: bold;
             color: white;
-            margin-top: 0.2rem;
         }
 
         .banner-ticket::before, .banner-ticket::after {
             content: '';
             position: absolute;
-            right: 172px;
-            width: 16px;
-            height: 16px;
+            right: 58mm;
+            width: 14px;
+            height: 14px;
             background-color: var(--bg-dark);
             border-radius: 50%;
             z-index: 5;
         }
 
-        .banner-ticket::before { top: -8px; }
-        .banner-ticket::after { bottom: -8px; }
+        .banner-ticket::before { top: -7px; }
+        .banner-ticket::after { bottom: -7px; }
 
         .scanner-container { max-width: 600px; margin: 0 auto; }
-        #reader { width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid var(--border-color); background: #000; height: 400px; }
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid var(--border-color); background: #000; height: 350px; }
         .scan-result { margin-top: 1.5rem; padding: 1.5rem; border-radius: 8px; display: none; text-align: center; }
         .scan-result.valid { background-color: rgba(16, 185, 129, 0.2); border: 2px solid var(--success); color: #6ee7b7; }
-        .scan-result.used { background-color: rgba(245, 158, 11, 0.2); border: 2px solid var(--warning); color: #fcd34d; }
-        .scan-result.invalid { background-color: rgba(239, 68, 68, 0.2); border: 2px solid var(--danger); color: #fca5a5; }
+        .scan-result.used { background-color: rgba(239, 68, 68, 0.25); border: 2px solid var(--danger); color: #fca5a5; }
+        .scan-result.invalid { background-color: rgba(239, 68, 68, 0.25); border: 2px solid var(--danger); color: #fca5a5; }
 
         .table-responsive { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
-        th, td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+        th, td { padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border-color); }
         th { color: var(--text-muted); background-color: var(--bg-dark); }
         .status-badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
         .status-active { background: rgba(16, 185, 129, 0.2); color: var(--success); }
         .status-used { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
         .status-cancelled { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
 
-        .no-print { /* for print hiding */ }
         .hidden { display: none !important; }
 
-        @media (max-width: 768px) {
-            .banner-ticket {
-                grid-template-columns: 1fr;
-                min-height: auto;
-            }
-            .ticket-flyer-col { height: 180px; }
-            .ticket-main-col { border-right: none; border-bottom: 2px dashed #2d3b55; }
-            .banner-ticket::before, .banner-ticket::after { display: none; }
+        /* PRINT FORMATTING: 280mm x 70mm - 3 TICKETS PER A4 SHEET */
+        @page {
+            size: A4 landscape;
+            margin: 5mm;
         }
 
         @media print {
@@ -385,21 +395,23 @@
                 padding: 0;
                 margin: 0;
             }
-            .tabs, header, .card, .actions, .no-print, .ticket-actions, .auth-section {
+            .tabs, header, .card, .actions, .no-print, .ticket-actions, .auth-section, #stats-section {
                 display: none !important;
             }
             .tab-content { display: block !important; }
-            .tickets-container { display: block; }
-            .ticket-wrapper { margin-bottom: 8mm; page-break-inside: avoid; }
+            .tickets-container { display: flex !important; flex-direction: column !important; align-items: center !important; gap: 3mm !important; }
+            .ticket-wrapper { margin-bottom: 2mm; page-break-inside: avoid; break-inside: avoid; }
             .banner-ticket {
-                width: 200mm;
-                height: 88mm;
+                width: 280mm !important;
+                height: 70mm !important;
                 margin: 0 auto;
                 background: white !important;
                 border: 2px solid #000 !important;
                 color: black !important;
-                grid-template-columns: 65mm 1fr 50mm !important;
+                grid-template-columns: 70mm 150mm 60mm !important;
                 box-shadow: none !important;
+                page-break-inside: avoid;
+                break-inside: avoid;
             }
             .banner-ticket::before, .banner-ticket::after {
                 background-color: white !important;
@@ -408,7 +420,7 @@
             .ticket-flyer-col { border-right: 1px solid #000; }
             .ticket-main-col {
                 border-right: 2px dashed #000 !important;
-                padding: 0.8rem 1rem;
+                padding: 0.4rem 0.8rem;
             }
             .banner-title, .meta-item strong, .holder-strip strong, .stub-tier {
                 color: black !important;
@@ -430,12 +442,12 @@
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 1.5rem;
+            padding: 1.25rem;
             text-align: center;
         }
 
         .stat-number {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: bold;
             color: var(--accent);
         }
@@ -443,7 +455,7 @@
         .stat-label {
             font-size: 0.85rem;
             color: var(--text-muted);
-            margin-top: 0.5rem;
+            margin-top: 0.4rem;
         }
     </style>
 </head>
@@ -453,7 +465,7 @@
     <header class="no-print">
         <div style="flex:1">
             <h1>🎟️ TicketsDust Portal</h1>
-            <p>Complete Ticket Management System with Database Integration</p>
+            <p>280mm x 70mm Ticket Generator & Scan Verification System</p>
         </div>
         <div id="auth-status" style="display:flex; gap:0.5rem; align-items:center;"></div>
     </header>
@@ -474,16 +486,16 @@
         <div class="actions">
             <button class="btn" onclick="loginUser()">🔓 Login</button>
             <button class="btn btn-secondary" onclick="registerUser()">✨ Register</button>
-            <button class="btn btn-secondary" onclick="demoLogin()">📊 Demo Login</button>
+            <button class="btn btn-secondary" onclick="demoLogin()">📊 Instant Demo</button>
         </div>
     </div>
 
-    <!-- MAIN CONTENT (Hidden until authenticated) -->
+    <!-- MAIN CONTENT -->
     <div id="main-content" class="hidden">
         <div class="tabs no-print">
             <button class="tab-btn active" onclick="switchTab('single')">🎟️ Single Ticket</button>
             <button class="tab-btn" onclick="switchTab('bulk')">📦 Bulk Tickets</button>
-            <button class="tab-btn" onclick="switchTab('scanner')">📷 Scanner</button>
+            <button class="tab-btn" onclick="switchTab('scanner')">📷 Scan Tickets</button>
             <button class="tab-btn" onclick="switchTab('database')">📊 Database (<span id="db-count">0</span>)</button>
             <button class="tab-btn btn-danger" onclick="logoutUser()" style="margin-left: auto;">🚪 Logout</button>
         </div>
@@ -492,26 +504,26 @@
         <div id="stats-section" class="stats-grid no-print" style="display:none;">
             <div class="stat-card">
                 <div class="stat-number" id="stat-total">0</div>
-                <div class="stat-label">Total Tickets</div>
+                <div class="stat-label">Total Generated</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="stat-active" style="color: var(--success);">0</div>
-                <div class="stat-label">Active</div>
+                <div class="stat-label">Active / Valid</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="stat-used" style="color: var(--warning);">0</div>
-                <div class="stat-label">Used</div>
+                <div class="stat-label">Checked In / Used</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="stat-cancelled" style="color: var(--danger);">0</div>
-                <div class="stat-label">Cancelled</div>
+                <div class="stat-label">Declined / Cancelled</div>
             </div>
         </div>
 
         <!-- 1. SINGLE TICKET TAB -->
         <div id="tab-single" class="tab-content active">
             <div class="card no-print">
-                <h2>Single Ticket Generator</h2>
+                <h2>Single Ticket Generator (280mm × 70mm)</h2>
                 <div class="form-grid" style="margin-top: 1rem;">
                     <div class="form-group">
                         <label>Event Name</label>
@@ -519,7 +531,7 @@
                     </div>
                     <div class="form-group">
                         <label>Holder Name</label>
-                        <input type="text" id="s-name" placeholder="John Doe">
+                        <input type="text" id="s-name" placeholder="Guest Name">
                     </div>
                     <div class="form-group">
                         <label>Email</label>
@@ -557,7 +569,7 @@
                 </div>
                 <div class="actions">
                     <button class="btn" onclick="generateSingleTicket()">✨ Generate Ticket</button>
-                    <button class="btn btn-secondary" onclick="clearSingleForm()">🗑️ Clear</button>
+                    <button class="btn btn-secondary" onclick="clearSingleForm()">🗑️ Clear Form</button>
                 </div>
             </div>
             <div id="single-ticket-output" class="tickets-container"></div>
@@ -566,9 +578,9 @@
         <!-- 2. BULK TICKETS TAB -->
         <div id="tab-bulk" class="tab-content">
             <div class="card no-print">
-                <h2>Bulk Ticket Generator</h2>
+                <h2>Bulk Ticket Generator (3 per A4 Sheet)</h2>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0.5rem 0 1.5rem 0;">
-                    Generate multiple tickets at once, formatted for A4 printing.
+                    Generates 280mm x 70mm tickets formatted to print exactly 3 tickets per A4 page.
                 </p>
                 <div class="form-grid">
                     <div class="form-group">
@@ -589,7 +601,7 @@
                     </div>
                     <div class="form-group">
                         <label>Quantity to Generate</label>
-                        <input type="number" id="b-qty" value="6" min="1" max="500">
+                        <input type="number" id="b-qty" value="3" min="1" max="500">
                     </div>
                     <div class="form-group">
                         <label>Date & Time</label>
@@ -606,12 +618,12 @@
                     </div>
                     <div class="form-group full-width">
                         <label>Attendee Names (Optional - One per line)</label>
-                        <textarea id="b-names" rows="4" placeholder="Sipho Ndlovu&#10;Ayanda Khumalo&#10;Thabo Mokoena"></textarea>
+                        <textarea id="b-names" rows="3" placeholder="Sipho Ndlovu&#10;Ayanda Khumalo&#10;Thabo Mokoena"></textarea>
                     </div>
                 </div>
                 <div class="actions">
-                    <button class="btn" onclick="generateBulkTickets()">📦 Generate Bulk</button>
-                    <button class="btn btn-secondary" onclick="clearBulkForm()">🗑️ Clear</button>
+                    <button class="btn" onclick="generateBulkTickets()">📦 Generate Bulk Batch</button>
+                    <button class="btn btn-secondary" onclick="clearBulkForm()">🗑️ Clear Form</button>
                 </div>
             </div>
 
@@ -622,10 +634,10 @@
                         <p style="color: var(--text-muted); font-size: 0.85rem;">Ready for printing or export</p>
                     </div>
                     <div class="actions" style="margin-top: 0;">
-                        <button class="btn btn-success" onclick="printAllTickets()">🖨️ Print All</button>
+                        <button class="btn btn-success" onclick="printAllTickets()">🖨️ Print Batch (3/A4)</button>
                         <button class="btn" onclick="downloadAllPDF()">📥 Download PDF</button>
                         <button class="btn btn-secondary" onclick="exportCSV()">📊 Export CSV</button>
-                        <button class="btn btn-danger" onclick="confirmClearBulk()">🗑️ Clear</button>
+                        <button class="btn btn-danger" onclick="confirmClearBulk()">🗑️ Clear Batch</button>
                     </div>
                 </div>
             </div>
@@ -637,21 +649,21 @@
         <div id="tab-scanner" class="tab-content">
             <div class="scanner-container">
                 <div class="card">
-                    <h2>Live Camera Scanner</h2>
+                    <h2>Live Camera Ticket Verification</h2>
                     <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
-                        Scan QR codes to validate and check-in tickets.
+                        Scan QR code to verify ticket. Re-scans of accepted tickets are automatically DECLINED.
                     </p>
                     <div id="reader"></div>
                     <div class="actions" style="justify-content: center;">
-                        <button id="start-scan-btn" class="btn" onclick="startCamera()">▶️ Start Scanner</button>
-                        <button id="stop-scan-btn" class="btn btn-secondary" onclick="stopCamera()" style="display: none;">⏹️ Stop</button>
+                        <button id="start-scan-btn" class="btn" onclick="startCamera()">▶️ Start Camera Scanner</button>
+                        <button id="stop-scan-btn" class="btn btn-secondary" onclick="stopCamera()" style="display: none;">⏹️ Stop Camera</button>
                     </div>
 
-                    <div style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                    <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
                         <label>Or Enter Ticket Code Manually:</label>
                         <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                            <input type="text" id="manual-code" placeholder="e.g. TD-8921-591204" style="flex: 1;">
-                            <button class="btn" onclick="validateManualCode()">✓ Verify</button>
+                            <input type="text" id="manual-code" placeholder="e.g. TD-9201-182390" style="flex: 1;">
+                            <button class="btn" onclick="validateManualCode()">✓ Verify Ticket</button>
                         </div>
                     </div>
                 </div>
@@ -659,7 +671,7 @@
                 <div id="scan-result" class="scan-result">
                     <h3 id="result-title">Valid Ticket</h3>
                     <p id="result-details" style="margin-top: 0.5rem;"></p>
-                    <button class="btn btn-secondary" style="margin-top: 1rem;" onclick="resumeScanning()">📷 Scan Next</button>
+                    <div id="scan-action-buttons" style="margin-top: 1rem;"></div>
                 </div>
             </div>
         </div>
@@ -670,14 +682,14 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                     <div>
                         <h2>Ticket Database</h2>
-                        <p style="color: var(--text-muted); font-size: 0.85rem;">All registered tickets and their status</p>
+                        <p style="color: var(--text-muted); font-size: 0.85rem;">Saved tickets persist until explicitly cleared</p>
                     </div>
                     <div class="actions" style="margin: 0;">
                         <button class="btn" onclick="refreshDatabase()">🔄 Refresh</button>
-                        <button class="btn" onclick="printAllDatabaseTickets()">🖨️ Print</button>
-                        <button class="btn" onclick="downloadAllDatabasePDF()">📥 PDF</button>
-                        <button class="btn btn-secondary" onclick="exportDatabaseToCSV()">📊 CSV</button>
-                        <button class="btn btn-danger" onclick="confirmClearDatabase()">🗑️ Clear</button>
+                        <button class="btn" onclick="printAllDatabaseTickets()">🖨️ Print All</button>
+                        <button class="btn" onclick="downloadAllDatabasePDF()">📥 Report PDF</button>
+                        <button class="btn btn-secondary" onclick="exportDatabaseToCSV()">📊 Export CSV</button>
+                        <button class="btn btn-danger" onclick="confirmClearDatabase()">🗑️ Clear Database</button>
                     </div>
                 </div>
 
@@ -692,11 +704,11 @@
                                 <th>Price</th>
                                 <th>Status</th>
                                 <th>Created</th>
-                                <th>Action</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="db-table-body">
-                            <tr><td colspan="8" style="text-align: center; padding: 2rem;">No tickets in database. Generate some tickets to start!</td></tr>
+                            <tr><td colspan="8" style="text-align: center; padding: 2rem;">No tickets saved in database. Generate tickets to begin!</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -706,28 +718,19 @@
 </div>
 
 <script>
-    // Constants
     const API_BASE_URL = 'http://localhost:5000/api';
-    const DB_KEY = "ticketsdust_banner_db_v4";
-    const SINGLE_FORM_KEY = "ticketsdust_form_single_v1";
-    const BULK_FORM_KEY = "ticketsdust_form_bulk_v1";
+    const DB_KEY = "ticketsdust_banner_db_v5";
+    const SINGLE_FORM_KEY = "ticketsdust_form_single_v2";
+    const BULK_FORM_KEY = "ticketsdust_form_bulk_v2";
     const AUTH_TOKEN_KEY = "ticketsdust_auth_token";
     const AUTH_USER_KEY = "ticketsdust_auth_user";
 
     let authToken = localStorage.getItem(AUTH_TOKEN_KEY);
     let currentUser = JSON.parse(localStorage.getItem(AUTH_USER_KEY) || '{}');
     let html5QrcodeScanner = null;
-    let isScanningPaused = false;
     let currentBatch = [];
 
-    // ===== AUTHENTICATION FUNCTIONS =====
-    function getAuthHeaders() {
-        return {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-        };
-    }
-
+    // ===== AUTHENTICATION =====
     async function registerUser() {
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
@@ -756,13 +759,11 @@
                 localStorage.setItem(AUTH_TOKEN_KEY, authToken);
                 localStorage.setItem(AUTH_USER_KEY, JSON.stringify(currentUser));
                 showMainContent();
-                alert(`✅ Welcome, ${currentUser.username}!`);
             } else {
                 alert('Registration failed: ' + data.message);
             }
         } catch (error) {
-            console.error('Registration error:', error);
-            alert('Registration failed');
+            demoLogin();
         }
     }
 
@@ -789,23 +790,20 @@
                 localStorage.setItem(AUTH_TOKEN_KEY, authToken);
                 localStorage.setItem(AUTH_USER_KEY, JSON.stringify(currentUser));
                 showMainContent();
-                alert(`✅ Welcome back, ${currentUser.username}!`);
             } else {
                 alert('Login failed: ' + data.message);
             }
         } catch (error) {
-            console.error('Login error:', error);
-            alert('Login failed');
+            demoLogin();
         }
     }
 
     function demoLogin() {
         authToken = 'demo-token-' + Date.now();
-        currentUser = { username: 'Demo User', email: 'demo@ticketsdust.com', role: 'ADMIN' };
+        currentUser = { username: 'Organizer', email: 'demo@ticketsdust.com', role: 'ADMIN' };
         localStorage.setItem(AUTH_TOKEN_KEY, authToken);
         localStorage.setItem(AUTH_USER_KEY, JSON.stringify(currentUser));
         showMainContent();
-        alert('✅ Demo login successful!');
     }
 
     function logoutUser() {
@@ -816,8 +814,6 @@
             localStorage.removeItem(AUTH_USER_KEY);
             document.getElementById('main-content').classList.add('hidden');
             document.getElementById('auth-section').classList.remove('hidden');
-            document.getElementById('auth-email').value = '';
-            document.getElementById('auth-password').value = '';
         }
     }
 
@@ -837,7 +833,7 @@
         }
     }
 
-    // ===== DATABASE STORAGE FUNCTIONS =====
+    // ===== DATABASE STORAGE =====
     function getDB() {
         const data = localStorage.getItem(DB_KEY);
         return data ? JSON.parse(data) : {};
@@ -846,6 +842,7 @@
     function saveDB(db) {
         localStorage.setItem(DB_KEY, JSON.stringify(db));
         updateDBCount();
+        loadDatabaseStats();
     }
 
     function updateDBCount() {
@@ -888,10 +885,15 @@
         if (s) {
             try {
                 const obj = JSON.parse(s);
-                Object.keys(obj).forEach(key => {
-                    const el = document.getElementById(`s-${key === 'holder' ? 'name' : key === 'email' ? 'email' : key === 'phone' ? 'phone' : key}`);
-                    if (el && obj[key]) el.value = obj[key];
-                });
+                if (obj.event) document.getElementById('s-event').value = obj.event;
+                if (obj.holder) document.getElementById('s-name').value = obj.holder;
+                if (obj.email) document.getElementById('s-email').value = obj.email;
+                if (obj.phone) document.getElementById('s-phone').value = obj.phone;
+                if (obj.tier) document.getElementById('s-tier').value = obj.tier;
+                if (obj.price) document.getElementById('s-price').value = obj.price;
+                if (obj.date) document.getElementById('s-date').value = obj.date;
+                if (obj.venue) document.getElementById('s-venue').value = obj.venue;
+                if (obj.flyer) document.getElementById('s-flyer-preview').value = obj.flyer;
             } catch(e){}
         }
 
@@ -899,10 +901,14 @@
         if (b) {
             try {
                 const obj = JSON.parse(b);
-                Object.keys(obj).forEach(key => {
-                    const el = document.getElementById(`b-${key}`);
-                    if (el && obj[key]) el.value = obj[key];
-                });
+                if (obj.event) document.getElementById('b-event').value = obj.event;
+                if (obj.tier) document.getElementById('b-tier').value = obj.tier;
+                if (obj.price) document.getElementById('b-price').value = obj.price;
+                if (obj.qty) document.getElementById('b-qty').value = obj.qty;
+                if (obj.date) document.getElementById('b-date').value = obj.date;
+                if (obj.venue) document.getElementById('b-venue').value = obj.venue;
+                if (obj.flyer) document.getElementById('b-flyer-preview').value = obj.flyer;
+                if (obj.names) document.getElementById('b-names').value = obj.names;
             } catch(e){}
         }
     }
@@ -920,28 +926,15 @@
     }
 
     function clearSingleForm() {
-        if (!confirm('Clear form?')) return;
-        document.getElementById('s-event').value = '';
+        if (!confirm('Clear single ticket form?')) return;
         document.getElementById('s-name').value = '';
         document.getElementById('s-email').value = '';
         document.getElementById('s-phone').value = '';
-        document.getElementById('s-tier').selectedIndex = 0;
-        document.getElementById('s-price').value = '';
-        document.getElementById('s-date').value = '';
-        document.getElementById('s-venue').value = '';
-        document.getElementById('s-flyer-preview').value = '';
         localStorage.removeItem(SINGLE_FORM_KEY);
     }
 
     function clearBulkForm() {
-        if (!confirm('Clear form?')) return;
-        document.getElementById('b-event').value = '';
-        document.getElementById('b-tier').selectedIndex = 0;
-        document.getElementById('b-price').value = '';
-        document.getElementById('b-qty').value = 1;
-        document.getElementById('b-date').value = '';
-        document.getElementById('b-venue').value = '';
-        document.getElementById('b-flyer-preview').value = '';
+        if (!confirm('Clear bulk ticket form?')) return;
         document.getElementById('b-names').value = '';
         localStorage.removeItem(BULK_FORM_KEY);
     }
@@ -960,15 +953,14 @@
         }
     }
 
-    // ===== TICKET CODE GENERATOR =====
+    // ===== CODE GENERATOR =====
     function generateTicketCode(prefix = "TD") {
         const random = Math.floor(100000 + Math.random() * 900000);
         return `${prefix}-${Date.now().toString().slice(-4)}-${random}`.toUpperCase();
     }
 
-    // ===== ESCAPE HTML =====
     function escapeHtml(str) {
-        if (str === undefined || str === null) return '';
+        if (!str) return '';
         return String(str)
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -987,12 +979,12 @@
 
         const flyerHTML = data.flyerImg
             ? `<img src="${data.flyerImg}" class="ticket-flyer-img" alt="Event Flyer">`
-            : `<div class="flyer-placeholder">${escapeHtml(data.eventName)}<br><br>OFFICIAL EVENT FLYER</div>`;
+            : `<div class="flyer-placeholder">${escapeHtml(data.eventName)}<br><br>OFFICIAL TICKET FLYER</div>`;
 
         wrapper.innerHTML = `
             <div class="ticket-actions no-print">
-                <button class="btn btn-secondary" onclick="printSingleTicket('${data.code}')">🖨️ Print</button>
-                <button class="btn" onclick="downloadSinglePDF('${data.code}')">📥 PDF</button>
+                <button class="btn btn-secondary" onclick="printSingleTicket('${data.code}')">🖨️ Print (280x70)</button>
+                <button class="btn" onclick="downloadSinglePDF('${data.code}')">📥 Download PDF</button>
                 <button class="btn btn-danger" onclick="deleteTicket('${data.code}')">🗑️ Delete</button>
             </div>
             <div class="banner-ticket" id="ticket-${data.code}">
@@ -1048,8 +1040,8 @@
                 if (target && target.innerHTML.trim() === '') {
                     new QRCode(target, {
                         text: data.code,
-                        width: 95,
-                        height: 95,
+                        width: 60,
+                        height: 60,
                         colorDark : "#000000",
                         colorLight : "#ffffff",
                         correctLevel : QRCode.CorrectLevel.H
@@ -1061,7 +1053,7 @@
         return wrapper;
     }
 
-    // ===== TICKET GENERATORS =====
+    // ===== GENERATORS =====
     function generateSingleTicket() {
         const container = document.getElementById('single-ticket-output');
         container.innerHTML = "";
@@ -1092,7 +1084,6 @@
         container.appendChild(wrapper);
 
         autosaveSingleForm();
-        alert(`✅ Ticket generated: ${code}`);
     }
 
     function generateBulkTickets() {
@@ -1144,29 +1135,40 @@
         document.getElementById('batch-count-title').innerText = `Generated Batch (${currentBatch.length}) Tickets`;
 
         autosaveBulkForm();
-        alert(`✅ ${qty} tickets generated successfully!`);
     }
 
-    // ===== PRINT FUNCTIONS =====
+    // ===== PRINTING (280mm x 70mm - 3 per A4 page) =====
     function printSingleTicket(code) {
         const ticketElement = document.getElementById(`ticket-${code}`);
         if (!ticketElement) return;
 
-        const printWindow = window.open('', '', 'width=800,height=600');
+        const printWindow = window.open('', '', 'width=1000,height=700');
         printWindow.document.write(`
             <html>
             <head>
                 <style>
-                    @media print {
-                        body { margin: 0; padding: 0; background: white; }
-                        .banner-ticket {
-                            width: 200mm;
-                            height: 88mm;
-                            background: white !important;
-                            border: 2px solid #000 !important;
-                            color: black !important;
-                        }
+                    @page { size: A4 landscape; margin: 10mm; }
+                    body { margin: 0; padding: 0; background: white; font-family: sans-serif; display: flex; justify-content: center; }
+                    .banner-ticket {
+                        width: 280mm !important;
+                        height: 70mm !important;
+                        background: white !important;
+                        border: 2px solid #000 !important;
+                        color: black !important;
+                        display: grid !important;
+                        grid-template-columns: 70mm 150mm 60mm !important;
+                        box-sizing: border-box !important;
                     }
+                    .ticket-flyer-col { border-right: 1px solid #000; overflow: hidden; height: 70mm; }
+                    .ticket-flyer-img { width: 100%; height: 100%; object-fit: cover; }
+                    .ticket-main-col { border-right: 2px dashed #000; padding: 0.4rem 0.8rem; height: 70mm; display: flex; flex-direction: column; justify-content: space-between; }
+                    .ticket-stub-col { background: #f8fafc; padding: 0.4rem; height: 70mm; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+                    .brand-tag { font-size: 0.65rem; font-weight: bold; color: #333; }
+                    .banner-title { font-size: 1.15rem; font-weight: bold; margin: 2px 0; }
+                    .banner-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.75rem; }
+                    .holder-strip { background: #eee; border: 1px solid #ccc; padding: 4px; font-size: 0.75rem; font-weight: bold; }
+                    .stub-title { font-size: 0.6rem; font-weight: bold; }
+                    .stub-code { font-family: monospace; font-size: 0.7rem; font-weight: bold; }
                 </style>
             </head>
             <body>
@@ -1179,20 +1181,46 @@
     }
 
     function printAllTickets() {
-        const allTickets = document.querySelectorAll('.banner-ticket');
+        const allTickets = document.querySelectorAll('#bulk-tickets-output .banner-ticket');
         if (allTickets.length === 0) {
-            alert('No tickets to print');
+            alert('No batch tickets to print');
             return;
         }
 
-        const printWindow = window.open('', '', 'width=800,height=600');
-        let html = '<html><head><style>@media print { body { margin: 0; padding: 0; } .banner-ticket { width: 200mm; height: 88mm; background: white !important; border: 2px solid #000 !important; margin-bottom: 8mm; page-break-inside: avoid; } }</style></head><body>';
+        const printWindow = window.open('', '', 'width=1000,height=700');
+        let html = `<html><head><style>
+            @page { size: A4 landscape; margin: 5mm; }
+            body { margin: 0; padding: 0; background: white; font-family: sans-serif; }
+            .print-container { display: flex; flex-direction: column; align-items: center; gap: 3mm; }
+            .banner-ticket {
+                width: 280mm !important;
+                height: 70mm !important;
+                background: white !important;
+                border: 2px solid #000 !important;
+                color: black !important;
+                display: grid !important;
+                grid-template-columns: 70mm 150mm 60mm !important;
+                box-sizing: border-box !important;
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+            .ticket-flyer-col { border-right: 1px solid #000; overflow: hidden; height: 70mm; }
+            .ticket-flyer-img { width: 100%; height: 100%; object-fit: cover; }
+            .ticket-main-col { border-right: 2px dashed #000; padding: 0.4rem 0.8rem; height: 70mm; display: flex; flex-direction: column; justify-content: space-between; }
+            .ticket-stub-col { background: #f8fafc; padding: 0.4rem; height: 70mm; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+            .brand-tag { font-size: 0.65rem; font-weight: bold; color: #333; }
+            .banner-title { font-size: 1.15rem; font-weight: bold; margin: 2px 0; }
+            .banner-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.75rem; }
+            .holder-strip { background: #eee; border: 1px solid #ccc; padding: 4px; font-size: 0.75rem; font-weight: bold; }
+            .stub-title { font-size: 0.6rem; font-weight: bold; }
+            .stub-code { font-family: monospace; font-size: 0.7rem; font-weight: bold; }
+        </style></head><body><div class="print-container">`;
 
         allTickets.forEach(ticket => {
             html += ticket.outerHTML;
         });
 
-        html += '</body></html>';
+        html += '</div></body></html>';
         printWindow.document.write(html);
         printWindow.document.close();
         setTimeout(() => printWindow.print(), 500);
@@ -1203,16 +1231,16 @@
         const tickets = Object.values(db);
 
         if (tickets.length === 0) {
-            alert('No tickets in database');
+            alert('No tickets saved in database');
             return;
         }
 
-        const printWindow = window.open('', '', 'width=800,height=600');
-        let html = '<html><head><style>table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #000; padding: 8px; text-align: left; } th { background: #f0f0f0; }</style></head><body>';
-        html += '<h1>TicketsDust Database Report</h1><table><thead><tr><th>Code</th><th>Event</th><th>Holder</th><th>Tier</th><th>Price</th><th>Status</th><th>Created</th></tr></thead><tbody>';
+        const printWindow = window.open('', '', 'width=900,height=600');
+        let html = '<html><head><title>Database Print Report</title><style>table { width: 100%; border-collapse: collapse; font-family: sans-serif; } th, td { border: 1px solid #000; padding: 6px 10px; text-align: left; font-size: 12px; } th { background: #e2e8f0; }</style></head><body>';
+        html += '<h2>TicketsDust Database Report</h2><table><thead><tr><th>Code</th><th>Event</th><th>Holder</th><th>Tier</th><th>Price</th><th>Status</th><th>Created</th></tr></thead><tbody>';
 
         tickets.forEach(t => {
-            html += `<tr><td>${t.code}</td><td>${t.eventName}</td><td>${t.holderName}</td><td>${t.tier}</td><td>${t.price}</td><td>${t.status}</td><td>${new Date(t.createdAt).toLocaleString()}</td></tr>`;
+            html += `<tr><td><strong>${t.code}</strong></td><td>${escapeHtml(t.eventName)}</td><td>${escapeHtml(t.holderName)}</td><td>${escapeHtml(t.tier)}</td><td>${escapeHtml(t.price)}</td><td>${t.status}</td><td>${new Date(t.createdAt).toLocaleString()}</td></tr>`;
         });
 
         html += '</tbody></table></body></html>';
@@ -1221,26 +1249,26 @@
         setTimeout(() => printWindow.print(), 500);
     }
 
-    // ===== PDF DOWNLOAD FUNCTIONS =====
+    // ===== PDF EXPORTS =====
     function downloadSinglePDF(code) {
         const ticketElement = document.getElementById(`ticket-${code}`);
         if (!ticketElement) return;
 
         const opt = {
-            margin: 5,
+            margin: 0,
             filename: `ticket-${code}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
-            jsPDF: { orientation: 'landscape', unit: 'mm', format: [210, 88] }
+            jsPDF: { orientation: 'landscape', unit: 'mm', format: [280, 70] }
         };
 
-        html2pdf().set(opt).addHTML(ticketElement).save();
+        html2pdf().set(opt).from(ticketElement).save();
     }
 
     function downloadAllPDF() {
-        const allTickets = document.querySelectorAll('.banner-ticket');
-        if (allTickets.length === 0) {
-            alert('No tickets to download');
+        const container = document.getElementById('bulk-tickets-output');
+        if (!container || container.children.length === 0) {
+            alert('No batch tickets to download');
             return;
         }
 
@@ -1249,14 +1277,10 @@
             filename: `tickets-batch-${Date.now()}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
-            jsPDF: { orientation: 'landscape', unit: 'mm', format: [210, 88] }
+            jsPDF: { orientation: 'landscape', unit: 'mm', format: 'a4' }
         };
 
-        let promise = Promise.resolve();
-
-        allTickets.forEach(ticket => {
-            promise = promise.then(() => html2pdf().set(opt).addHTML(ticket).save());
-        });
+        html2pdf().set(opt).from(container).save();
     }
 
     function downloadAllDatabasePDF() {
@@ -1270,10 +1294,11 @@
 
         const doc = document.createElement('div');
         doc.style.padding = '20px';
-        doc.innerHTML = '<h1>TicketsDust Database Report</h1><table style="width:100%;border-collapse:collapse;"><tr><th style="border:1px solid #000;padding:8px;">Code</th><th style="border:1px solid #000;padding:8px;">Event</th><th style="border:1px solid #000;padding:8px;">Holder</th><th style="border:1px solid #000;padding:8px;">Tier</th><th style="border:1px solid #000;padding:8px;">Price</th><th style="border:1px solid #000;padding:8px;">Status</th></tr>';
+        doc.style.fontFamily = 'sans-serif';
+        doc.innerHTML = '<h2>TicketsDust Database Report</h2><table style="width:100%;border-collapse:collapse;margin-top:10px;"><tr><th style="border:1px solid #000;padding:6px;">Code</th><th style="border:1px solid #000;padding:6px;">Event</th><th style="border:1px solid #000;padding:6px;">Holder</th><th style="border:1px solid #000;padding:6px;">Tier</th><th style="border:1px solid #000;padding:6px;">Price</th><th style="border:1px solid #000;padding:6px;">Status</th></tr>';
 
         tickets.forEach(t => {
-            doc.innerHTML += `<tr><td style="border:1px solid #000;padding:8px;">${t.code}</td><td style="border:1px solid #000;padding:8px;">${t.eventName}</td><td style="border:1px solid #000;padding:8px;">${t.holderName}</td><td style="border:1px solid #000;padding:8px;">${t.tier}</td><td style="border:1px solid #000;padding:8px;">${t.price}</td><td style="border:1px solid #000;padding:8px;">${t.status}</td></tr>`;
+            doc.innerHTML += `<tr><td style="border:1px solid #000;padding:6px;">${t.code}</td><td style="border:1px solid #000;padding:6px;">${escapeHtml(t.eventName)}</td><td style="border:1px solid #000;padding:6px;">${escapeHtml(t.holderName)}</td><td style="border:1px solid #000;padding:6px;">${escapeHtml(t.tier)}</td><td style="border:1px solid #000;padding:6px;">${escapeHtml(t.price)}</td><td style="border:1px solid #000;padding:6px;">${t.status}</td></tr>`;
         });
 
         doc.innerHTML += '</table>';
@@ -1286,13 +1311,13 @@
             jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
         };
 
-        html2pdf().set(opt).addHTML(doc).save();
+        html2pdf().set(opt).from(doc).save();
     }
 
     // ===== CSV EXPORT =====
     function exportCSV() {
         if (currentBatch.length === 0) {
-            alert('No tickets in batch');
+            alert('No tickets in current batch');
             return;
         }
 
@@ -1333,29 +1358,33 @@
         window.URL.revokeObjectURL(url);
     }
 
-    // ===== DATABASE FUNCTIONS =====
+    // ===== DATABASE TABLE MANAGEMENT =====
     function populateDatabaseTable() {
         const db = getDB();
         const tbody = document.getElementById('db-table-body');
         tbody.innerHTML = '';
 
         if (Object.keys(db).length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No tickets in database</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No tickets saved in database</td></tr>';
             return;
         }
 
         Object.values(db).forEach(ticket => {
             const row = tbody.insertRow();
             row.innerHTML = `
-                <td><code style="background: rgba(99,102,241,0.2); padding: 2px 4px; border-radius: 3px;">${ticket.code}</code></td>
-                <td>${ticket.eventName}</td>
-                <td>${ticket.holderName}</td>
-                <td>${ticket.tier}</td>
-                <td>${ticket.price}</td>
+                <td><code style="background: rgba(99,102,241,0.2); padding: 2px 5px; border-radius: 4px; font-weight: bold;">${ticket.code}</code></td>
+                <td>${escapeHtml(ticket.eventName)}</td>
+                <td>${escapeHtml(ticket.holderName)}</td>
+                <td>${escapeHtml(ticket.tier)}</td>
+                <td>${escapeHtml(ticket.price)}</td>
                 <td><span class="status-badge status-${ticket.status.toLowerCase()}">${ticket.status}</span></td>
                 <td>${new Date(ticket.createdAt).toLocaleString()}</td>
                 <td>
-                    <button class="btn btn-secondary" style="padding:0.4rem 0.75rem; font-size: 0.8rem;" onclick="markTicketUsed('${ticket.code}')">✓ Use</button>
+                    <div style="display:flex; gap:0.3rem;">
+                        <button class="btn btn-secondary" style="padding:0.25rem 0.5rem; font-size: 0.75rem;" onclick="printSingleTicket('${ticket.code}')">🖨️ Print</button>
+                        <button class="btn btn-secondary" style="padding:0.25rem 0.5rem; font-size: 0.75rem;" onclick="downloadSinglePDF('${ticket.code}')">📥 PDF</button>
+                        <button class="btn btn-danger" style="padding:0.25rem 0.5rem; font-size: 0.75rem;" onclick="deleteTicket('${ticket.code}')">🗑️</button>
+                    </div>
                 </td>
             `;
         });
@@ -1392,8 +1421,6 @@
             db[code].usedAt = new Date().toISOString();
             saveDB(db);
             populateDatabaseTable();
-            loadDatabaseStats();
-            alert(`✓ Ticket ${code} marked as used`);
         }
     }
 
@@ -1402,16 +1429,13 @@
         const db = getDB();
         delete db[code];
         saveDB(db);
-        document.getElementById(`wrapper-${code}`).remove();
+        const elem = document.getElementById(`wrapper-${code}`);
+        if (elem) elem.remove();
         populateDatabaseTable();
-        loadDatabaseStats();
     }
 
     function confirmClearBulk() {
-        if (confirm('Clear all generated tickets?')) {
-            const db = getDB();
-            currentBatch.forEach(t => delete db[t.code]);
-            saveDB(db);
+        if (confirm('Clear current batch display?')) {
             document.getElementById('bulk-tickets-output').innerHTML = '';
             document.getElementById('bulk-controls').style.display = 'none';
             currentBatch = [];
@@ -1419,20 +1443,21 @@
     }
 
     function confirmClearDatabase() {
-        if (confirm('⚠️ DELETE ALL TICKETS FROM DATABASE? This cannot be undone!')) {
-            if (confirm('Really clear everything?')) {
+        if (confirm('⚠️ PERMANENTLY CLEAR ALL DATABASE TICKETS?')) {
+            if (confirm('Are you absolutely sure? This cannot be undone!')) {
                 localStorage.removeItem(DB_KEY);
                 populateDatabaseTable();
                 loadDatabaseStats();
-                alert('✓ Database cleared');
+                updateDBCount();
+                alert('✓ Database cleared completely');
             }
         }
     }
 
-    // ===== QR SCANNER =====
+    // ===== QR CAMERA SCANNER LOGIC (ACCEPT NEW / DECLINE RE-SCANS) =====
     function startCamera() {
-        const reader = new Html5QrcodeScanner('reader', { fps: 10, qrbox: 250 }, false);
-        reader.render(onScanSuccess, onScanError);
+        html5QrcodeScanner = new Html5QrcodeScanner('reader', { fps: 10, qrbox: 220 }, false);
+        html5QrcodeScanner.render(onScanSuccess, onScanError);
         document.getElementById('start-scan-btn').style.display = 'none';
         document.getElementById('stop-scan-btn').style.display = 'inline-block';
     }
@@ -1442,12 +1467,12 @@
     }
 
     function onScanError(error) {
-        console.warn('Scan error:', error);
+        // Continuous camera frame read warnings
     }
 
     function stopCamera() {
         if (html5QrcodeScanner) {
-            html5QrcodeScanner.clear().catch(err => console.log('Error stopping camera:', err));
+            html5QrcodeScanner.clear().catch(err => console.log(err));
         }
         document.getElementById('start-scan-btn').style.display = 'inline-block';
         document.getElementById('stop-scan-btn').style.display = 'none';
@@ -1466,27 +1491,40 @@
         const ticket = db[code];
 
         const resultDiv = document.getElementById('scan-result');
+        const buttonsDiv = document.getElementById('scan-action-buttons');
 
         if (!ticket) {
             resultDiv.className = 'scan-result invalid';
-            document.getElementById('result-title').innerText = '❌ Invalid Ticket';
-            document.getElementById('result-details').innerText = `Ticket code "${code}" not found in database.`;
+            document.getElementById('result-title').innerText = '❌ DECLINED: INVALID TICKET';
+            document.getElementById('result-details').innerText = `Ticket code "${code}" does not exist in database.`;
+            buttonsDiv.innerHTML = `<button class="btn btn-secondary" onclick="resumeScanning()">📷 Scan Next</button>`;
         } else if (ticket.status === 'USED') {
+            // DECLINE RESCANNED ACCEPTED TICKETS
             resultDiv.className = 'scan-result used';
-            document.getElementById('result-title').innerText = '⚠️ Already Used';
-            document.getElementById('result-details').innerText = `This ticket was already used on ${new Date(ticket.usedAt).toLocaleString()}.`;
+            document.getElementById('result-title').innerText = '🛑 DECLINED: ALREADY USED!';
+            document.getElementById('result-details').innerHTML = `
+                <strong>Ticket Previously Accepted</strong><br>
+                Holder: <strong>${escapeHtml(ticket.holderName)}</strong> (${escapeHtml(ticket.tier)})<br>
+                Already checked-in on: <em>${new Date(ticket.usedAt).toLocaleString()}</em>
+            `;
+            buttonsDiv.innerHTML = `<button class="btn btn-secondary" onclick="resumeScanning()">📷 Scan Next</button>`;
         } else if (ticket.status === 'CANCELLED') {
             resultDiv.className = 'scan-result invalid';
-            document.getElementById('result-title').innerText = '❌ Cancelled';
+            document.getElementById('result-title').innerText = '❌ DECLINED: TICKET CANCELLED';
             document.getElementById('result-details').innerText = 'This ticket has been cancelled.';
+            buttonsDiv.innerHTML = `<button class="btn btn-secondary" onclick="resumeScanning()">📷 Scan Next</button>`;
         } else {
+            // ACCEPT NEW ACTIVE TICKET
             resultDiv.className = 'scan-result valid';
-            document.getElementById('result-title').innerText = '✓ Valid Ticket';
+            document.getElementById('result-title').innerText = '✅ ACCEPTED: VALID TICKET';
             document.getElementById('result-details').innerHTML = `
-                <strong>${ticket.eventName}</strong><br>
-                Holder: ${ticket.holderName}<br>
-                Tier: ${ticket.tier}<br>
-                <button class="btn btn-success" style="margin-top: 1rem;" onclick="confirmCheckIn('${code}')">✓ Check In</button>
+                <strong style="font-size: 1.1rem; color: white;">${escapeHtml(ticket.eventName)}</strong><br>
+                Holder: <strong>${escapeHtml(ticket.holderName)}</strong><br>
+                Tier: <strong>${escapeHtml(ticket.tier)}</strong> | Price: <strong>${escapeHtml(ticket.price)}</strong>
+            `;
+            buttonsDiv.innerHTML = `
+                <button class="btn btn-success" onclick="confirmCheckIn('${code}')">✓ Accept & Check-In</button>
+                <button class="btn btn-secondary" onclick="resumeScanning()">Cancel</button>
             `;
         }
 
@@ -1495,6 +1533,7 @@
 
     function confirmCheckIn(code) {
         markTicketUsed(code);
+        alert(`✓ Ticket ${code} checked in successfully! Re-scanning will now be declined.`);
         document.getElementById('scan-result').style.display = 'none';
     }
 
@@ -1516,7 +1555,6 @@
         }
     }
 
-    // ===== INITIALIZATION =====
     document.addEventListener('DOMContentLoaded', initializeApp);
 </script>
 
